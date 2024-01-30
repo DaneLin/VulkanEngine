@@ -1,17 +1,18 @@
-#pragma once
+#ifndef __ARC_PIPELINE_H__
+#define __ARC_PIPELINE_H__
 
 #include "arc_device.hpp"
 
-//std
+// std
 #include <string>
 #include <vector>
 
 namespace arc
 {
-    struct PipelineConfigInfo 
+    struct PipelineConfigInfo
     {
-        PipelineConfigInfo(const PipelineConfigInfo&) = delete;
-        PipelineConfigInfo& operator=(const PipelineConfigInfo&) = delete;
+        PipelineConfigInfo(const PipelineConfigInfo &) = delete;
+        PipelineConfigInfo &operator=(const PipelineConfigInfo &) = delete;
 
         VkPipelineViewportStateCreateInfo viewportInfo;
         VkPipelineInputAssemblyStateCreateInfo inputAssemblyInfo;
@@ -29,27 +30,28 @@ namespace arc
 
     class ArcPipeline
     {
-        public:
-            ArcPipeline(ArcDevice &device, const std::string& vertFilePath, const std::string& fragFilePath, const PipelineConfigInfo& configInfo);
-            ~ArcPipeline();
+    public:
+        ArcPipeline(ArcDevice &device, const std::string &vertFilePath, const std::string &fragFilePath, const PipelineConfigInfo &configInfo);
+        ~ArcPipeline();
 
-            ArcPipeline(const ArcPipeline&) = delete;
-            ArcPipeline operator=(const ArcPipeline&) = delete;
+        ArcPipeline(const ArcPipeline &) = delete;
+        ArcPipeline operator=(const ArcPipeline &) = delete;
 
-            void bind(VkCommandBuffer commandBuffer);
+        void bind(VkCommandBuffer commandBuffer);
 
-            static void defaultPipelineConfigInfo(PipelineConfigInfo& configInfo);
+        static void defaultPipelineConfigInfo(PipelineConfigInfo &configInfo);
 
-        private:
-            static std::vector<char> readFile(const std::string& filepath);
+    private:
+        static std::vector<char> readFile(const std::string &filepath);
 
-            void createGraphicsPipeline(const std::string& vertFilePath, const std::string& fragFilePath, const PipelineConfigInfo& configInfo);
+        void createGraphicsPipeline(const std::string &vertFilePath, const std::string &fragFilePath, const PipelineConfigInfo &configInfo);
 
-            void createShaderModule(const std::vector<char>& code, VkShaderModule* shaderModule);
+        void createShaderModule(const std::vector<char> &code, VkShaderModule *shaderModule);
 
-            ArcDevice& arcDevice;
-            VkPipeline graphicsPipeline;
-            VkShaderModule vertShaderModule;
-            VkShaderModule fragShaderModule;
+        ArcDevice &arcDevice;
+        VkPipeline graphicsPipeline;
+        VkShaderModule vertShaderModule;
+        VkShaderModule fragShaderModule;
     };
 }
+#endif // __ARC_PIPELINE_H__

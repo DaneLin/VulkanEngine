@@ -14,26 +14,26 @@ namespace arc
         bindingDescriptions[0].inputRate = VK_VERTEX_INPUT_RATE_VERTEX;
         return bindingDescriptions;
     }
-    
+
     std::vector<VkVertexInputAttributeDescription> ArcModel::Vertex::getAttributeDescriptions()
     {
         std::vector<VkVertexInputAttributeDescription> attributeDescriptions(2);
 
         attributeDescriptions[0].binding = 0;
-        attributeDescriptions[0].location= 0;
+        attributeDescriptions[0].location = 0;
         attributeDescriptions[0].format = VK_FORMAT_R32G32_SFLOAT;
         attributeDescriptions[0].offset = offsetof(Vertex, Vertex::position);
 
         attributeDescriptions[1].binding = 0;
-        attributeDescriptions[1].location= 1;
+        attributeDescriptions[1].location = 1;
         attributeDescriptions[1].format = VK_FORMAT_R32G32B32_SFLOAT;
         attributeDescriptions[1].offset = offsetof(Vertex, Vertex::color);
 
         return attributeDescriptions;
     }
 
-    ArcModel::ArcModel(ArcDevice &device, const std::vector<Vertex> & vertices)
-        :arcDevice{device}
+    ArcModel::ArcModel(ArcDevice &device, const std::vector<Vertex> &vertices)
+        : arcDevice{device}
     {
         createVertexBuffers(vertices);
     }
@@ -56,8 +56,7 @@ namespace arc
             VK_BUFFER_USAGE_VERTEX_BUFFER_BIT,
             VK_MEMORY_PROPERTY_HOST_VISIBLE_BIT | VK_MEMORY_PROPERTY_HOST_COHERENT_BIT,
             vertexBuffer,
-            vertexBufferMemory
-        );
+            vertexBufferMemory);
 
         void *data;
         // create a region of host memory mapped to device memory
@@ -68,7 +67,7 @@ namespace arc
 
     void ArcModel::draw(VkCommandBuffer commandBuffer)
     {
-        vkCmdDraw(commandBuffer, vertexCount, 1, 0, 0);        
+        vkCmdDraw(commandBuffer, vertexCount, 1, 0, 0);
     }
 
     void ArcModel::bind(VkCommandBuffer commandBuffer)

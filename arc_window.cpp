@@ -27,7 +27,6 @@ namespace arc
         glfwSetFramebufferSizeCallback(window, framebufferResizeCallback);
     }
 
-
     void ArcWindow::createWindowSurface(VkInstance instance, VkSurfaceKHR *surface)
     {
         if (glfwCreateWindowSurface(instance, window, nullptr, surface) != VK_SUCCESS)
@@ -35,13 +34,13 @@ namespace arc
             throw std::runtime_error("failed to create window surface!");
         }
     }
-    
-    void ArcWindow::framebufferResizeCallback(GLFWwindow* window, int width, int height)
+
+    void ArcWindow::framebufferResizeCallback(GLFWwindow *window, int width, int height)
     {
-        auto arcWindow = reinterpret_cast<ArcWindow*>(glfwGetWindowUserPointer(window));
+        auto arcWindow = reinterpret_cast<ArcWindow *>(glfwGetWindowUserPointer(window));
         arcWindow->framebufferResized = true;
         arcWindow->width = width;
         arcWindow->height = height;
     }
-    
+
 }

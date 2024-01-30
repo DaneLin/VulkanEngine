@@ -27,7 +27,6 @@ namespace arc
     oldSwapChain = nullptr;
   }
 
-
   ArcSwapChain::~ArcSwapChain()
   {
     for (auto imageView : swapChainImageViews)
@@ -135,7 +134,7 @@ namespace arc
 
     return result;
   }
-  
+
   void ArcSwapChain::init()
   {
     createSwapChain();
@@ -194,7 +193,7 @@ namespace arc
     createInfo.presentMode = presentMode;
     createInfo.clipped = VK_TRUE;
 
-    createInfo.oldSwapchain = oldSwapChain == nullptr?VK_NULL_HANDLE : oldSwapChain->swapChain;
+    createInfo.oldSwapchain = oldSwapChain == nullptr ? VK_NULL_HANDLE : oldSwapChain->swapChain;
 
     if (vkCreateSwapchainKHR(device.device(), &createInfo, nullptr, &swapChain) != VK_SUCCESS)
     {

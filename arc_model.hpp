@@ -1,4 +1,5 @@
-#pragma once
+#ifndef __ARC_MODEL_H__
+#define __ARC_MODEL_H__
 
 #include "arc_device.hpp"
 
@@ -14,33 +15,33 @@ namespace arc
 {
     class ArcModel
     {
-        public:
+    public:
+        struct Vertex
+        {
+            glm::vec2 position;
+            glm::vec3 color;
 
-            struct Vertex
-            {
-                glm::vec2 position;
-                glm::vec3 color;
+            static std::vector<VkVertexInputBindingDescription> getBindingDescriptions();
+            static std::vector<VkVertexInputAttributeDescription> getAttributeDescriptions();
+        };
 
-                static std::vector<VkVertexInputBindingDescription> getBindingDescriptions();
-                static std::vector<VkVertexInputAttributeDescription> getAttributeDescriptions();
-            };
+        ArcModel(ArcDevice &device, const std::vector<Vertex> &vertices);
+        ~ArcModel();
 
-            ArcModel(ArcDevice &device, const std::vector<Vertex> & vertices);
-            ~ArcModel();
+        ArcModel(const ArcModel &) = delete;
+        ArcModel operator=(const ArcModel &) = delete;
 
-            ArcModel(const ArcModel &) = delete;
-            ArcModel operator=(const ArcModel &) = delete;
+        void bind(VkCommandBuffer commandBuffer);
+        void draw(VkCommandBuffer commandBuffer);
 
-            void bind(VkCommandBuffer commandBuffer);
-            void draw(VkCommandBuffer commandBuffer);
+    private:
+        void createVertexBuffers(const std::vector<Vertex> &vertices);
 
-        private:
-            void createVertexBuffers(const std::vector<Vertex> &vertices);
-
-        private:
-            ArcDevice& arcDevice;
-            VkBuffer vertexBuffer;
-            VkDeviceMemory vertexBufferMemory;
-            uint32_t vertexCount;
+    private:
+        ArcDevice &arcDevice;
+        VkBuffer vertexBuffer;
+        VkDeviceMemory vertexBufferMemory;
+        uint32_t vertexCount;
     };
 }
+#endif // __ARC_MODEL_H__

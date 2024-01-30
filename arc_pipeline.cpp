@@ -1,34 +1,34 @@
 #include "arc_pipeline.hpp"
 #include "arc_model.hpp"
 
-#include<fstream>
+#include <fstream>
 #include <stdexcept>
 #include <iostream>
 #include <cassert>
 
 namespace arc
 {
-    ArcPipeline::ArcPipeline(ArcDevice &device, const std::string& vertFilePath, const std::string& fragFilePath, const PipelineConfigInfo& configInfo)
-        :arcDevice(device)
+    ArcPipeline::ArcPipeline(ArcDevice &device, const std::string &vertFilePath, const std::string &fragFilePath, const PipelineConfigInfo &configInfo)
+        : arcDevice(device)
     {
         createGraphicsPipeline(vertFilePath, fragFilePath, configInfo);
     }
-    
+
     void ArcPipeline::bind(VkCommandBuffer commandBuffer)
     {
         vkCmdBindPipeline(commandBuffer, VK_PIPELINE_BIND_POINT_GRAPHICS, graphicsPipeline);
     }
-    
+
     ArcPipeline::~ArcPipeline()
     {
         vkDestroyShaderModule(arcDevice.device(), vertShaderModule, nullptr);
         vkDestroyShaderModule(arcDevice.device(), fragShaderModule, nullptr);
         vkDestroyPipeline(arcDevice.device(), graphicsPipeline, nullptr);
     }
-    
-    void ArcPipeline::defaultPipelineConfigInfo(PipelineConfigInfo& configInfo)
-    {
 
+    void ArcPipeline::defaultPipelineConfigInfo(PipelineConfigInfo &configInfo)
+    {
+        // Implement all fixed stages in vulkan pipeline
         configInfo.inputAssemblyInfo.sType = VK_STRUCTURE_TYPE_PIPELINE_INPUT_ASSEMBLY_STATE_CREATE_INFO;
         configInfo.inputAssemblyInfo.topology = VK_PRIMITIVE_TOPOLOGY_TRIANGLE_LIST;
         configInfo.inputAssemblyInfo.primitiveRestartEnable = VK_FALSE;
@@ -60,7 +60,7 @@ namespace arc
 
         // Color Blend
         configInfo.colorBlendAttachment.colorWriteMask = VK_COLOR_COMPONENT_R_BIT |
-                VK_COLOR_COMPONENT_G_BIT | VK_COLOR_COMPONENT_B_BIT | VK_COLOR_COMPONENT_A_BIT;
+                                                         VK_COLOR_COMPONENT_G_BIT | VK_COLOR_COMPONENT_B_BIT | VK_COLOR_COMPONENT_A_BIT;
         configInfo.colorBlendAttachment.blendEnable = VK_FALSE;
 
         configInfo.colorBlendInfo.sType = VK_STRUCTURE_TYPE_PIPELINE_COLOR_BLEND_STATE_CREATE_INFO;
@@ -83,7 +83,7 @@ namespace arc
         configInfo.dynamicStateInfo.flags = 0;
     }
 
-    void ArcPipeline::createGraphicsPipeline(const std::string& vertFilePath, const std::string& fragFilePath, const PipelineConfigInfo& configInfo)
+    void ArcPipeline::createGraphicsPipeline(const std::string &vertFilePath, const std::string &fragFilePath, const PipelineConfigInfo &configInfo)
     {
         assert(configInfo.pipelineLayout != VK_NULL_HANDLE && "Cannot create graphics pipeline: no pipelineLayout provided in configInfo!");
         assert(configInfo.renderPass != VK_NULL_HANDLE && "Cannot create graphics pipeline: no renderPass provided in configInfo");
@@ -146,15 +146,14 @@ namespace arc
         {
             throw std::runtime_error("failed to create graphics pipeline!");
         }
-
     }
-    
-    void ArcPipeline::createShaderModule(const std::vector<char>& code, VkShaderModule* shaderModule)
+
+    void ArcPipeline::createShaderModule(const std::vector<char> &code, VkShaderModule *shaderModule)
     {
         VkShaderModuleCreateInfo createInfo{};
         createInfo.sType = VK_STRUCTURE_TYPE_SHADER_MODULE_CREATE_INFO;
         createInfo.codeSize = code.size();
-        createInfo.pCode = reinterpret_cast<const uint32_t*>(code.data());
+        createInfo.pCode = reinterpret_cast<const uint32_t *>(code.data());
 
         if (vkCreateShaderModule(arcDevice.device(), &createInfo, nullptr, shaderModule) != VK_SUCCESS)
         {
@@ -162,9 +161,9 @@ namespace arc
         }
     }
 
-    std::vector<char> ArcPipeline::readFile(const std::string& filepath)
+    std::vector<char> ArcPipeline::readFile(const std::string &filepath)
     {
-        std::ifstream file{filepath, std::ios::ate|std::ios::binary};
+        std::ifstream file{filepath, std::ios::ate | std::ios::binary};
 
         if (!file.is_open())
         {
