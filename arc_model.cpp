@@ -1,8 +1,32 @@
 #include "arc_model.hpp"
+#include "arc_utils.hpp"
+
+// libs
+#define TINYOBJLOADER_IMPLEMENTATION
+#include "tiny_obj_loader.h"
+
+#define GLM_ENABLE_EXPERIMENTAL
+#include <glm/gtx/hash.hpp>
 
 // std
 #include <cassert>
+#include <iostream>
 #include <cstring>
+#include <unordered_map>
+
+namespace std
+{
+    template <>
+    struct hash<arc::ArcModel::Vertex>
+    {
+        size_t operator()(arc::ArcModel::Vertex const &vertex) const
+        {
+            size_t seed = 0;
+            arc::hashCombine(seed, vertex.position, vertex.color, vertex.normal, vertex.uv);
+            return seed;
+        }
+    };
+}
 
 namespace arc
 {
@@ -17,17 +41,12 @@ namespace arc
 
     std::vector<VkVertexInputAttributeDescription> ArcModel::Vertex::getAttributeDescriptions()
     {
-        std::vector<VkVertexInputAttributeDescription> attributeDescriptions(2);
+        std::vector<VkVertexInputAttributeDescription> attributeDescriptions{};
 
-        attributeDescriptions[0].binding = 0;
-        attributeDescriptions[0].location = 0;
-        attributeDescriptions[0].format = VK_FORMAT_R32G32B32_SFLOAT;
-        attributeDescriptions[0].offset = offsetof(Vertex, Vertex::position);
-
-        attributeDescriptions[1].binding = 0;
-        attributeDescriptions[1].location = 1;
-        attributeDescriptions[1].format = VK_FORMAT_R32G32B32_SFLOAT;
-        attributeDescriptions[1].offset = offsetof(Vertex, Vertex::color);
+        attributeDescriptions.push_back({0, 0, VK_FORMAT_R32G32B32_SFLOAT, offsetof(Vertex, Vertex::position)});
+        attributeDescriptions.push_back({1, 0, VK_FORMAT_R32G32B32_SFLOAT, offsetof(Vertex, Vertex::color)});
+        attributeDescriptions.push_back({2, 0, VK_FORMAT_R32G32B32_SFLOAT, offsetof(Vertex, Vertex::normal)});
+        attributeDescriptions.push_back({3, 0, VK_FORMAT_R32G32_SFLOAT, offsetof(Vertex, Vertex::uv)});
 
         return attributeDescriptions;
     }
@@ -89,6 +108,7 @@ namespace arc
 
     void ArcModel::createIndexBuffers(const std::vector<uint32_t> &indices)
     {
+        // std::cout << "indexCount : " << indices.size() << '\n';
         indexCount = static_cast<uint32_t>(indices.size());
         hasIndexBuffer = indexCount > 0;
 
@@ -126,6 +146,15 @@ namespace arc
         vkFreeMemory(arcDevice.device(), stagingBufferMemory, nullptr);
     }
 
+    std::unique_ptr<ArcModel> ArcModel::createModelFromFile(ArcDevice &device, const std::string &filepath)
+    {
+        Builder builder{};
+        builder.loadModel(filepath);
+        std::cout << "Vertex count: " << builder.vertices.size() << '\n';
+        std::cout << "Index count: " << builder.indices.size() << '\n';
+        return std::make_unique<ArcModel>(device, builder);
+    }
+
     void ArcModel::draw(VkCommandBuffer commandBuffer)
     {
         if (hasIndexBuffer)
@@ -150,4 +179,62 @@ namespace arc
         }
     }
 
+    void ArcModel::Builder::loadModel(const std::string &filepath)
+    {
+        tinyobj::attrib_t attrib;
+        std::vector<tinyobj::shape_t> shapes;
+        std::vector<tinyobj::material_t> materials;
+        std::string warn, err;
+
+        if (!tinyobj::LoadObj(&attrib, &shapes, &materials, &warn, &err, filepath.c_str()))
+        {
+            throw std::runtime_error(warn + err);
+        }
+
+        vertices.clear();
+        indices.clear();
+
+        std::unordered_map<Vertex, uint32_t> uniqueVertices{};
+        for (const auto &shape : shapes)
+        {
+            for (const auto &index : shape.mesh.indices)
+            {
+                Vertex vertex{};
+
+                if (index.vertex_index >= 0)
+                {
+                    vertex.position = {
+                        attrib.vertices[3 * index.vertex_index + 0],
+                        attrib.vertices[3 * index.vertex_index + 1],
+                        attrib.vertices[3 * index.vertex_index + 2]};
+
+                    vertex.color = {
+                        attrib.colors[3 * index.vertex_index + 0],
+                        attrib.colors[3 * index.vertex_index + 1],
+                        attrib.colors[3 * index.vertex_index + 2]};
+                }
+
+                if (index.normal_index >= 0)
+                {
+                    vertex.normal = {
+                        attrib.normals[3 * index.normal_index + 0],
+                        attrib.normals[3 * index.normal_index + 1],
+                        attrib.normals[3 * index.normal_index + 2]};
+                }
+
+                if (index.texcoord_index >= 0)
+                {
+                    vertex.uv = {
+                        attrib.normals[2 * index.texcoord_index + 0],
+                        attrib.normals[2 * index.texcoord_index + 1]};
+                }
+                if (uniqueVertices.count(vertex) == 0)
+                {
+                    uniqueVertices[vertex] = static_cast<uint32_t>(vertices.size());
+                    vertices.push_back(vertex);
+                }
+                indices.push_back(uniqueVertices[vertex]);
+            }
+        }
+    }
 }

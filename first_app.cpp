@@ -118,12 +118,12 @@ namespace arc
 
     void FirstApp::loadGameObjects()
     {
-        std::shared_ptr<ArcModel> arcModel = createCubeModel(arcDevice, {0.f, 0.f, 0.f});
+        std::shared_ptr<ArcModel> arcModel = ArcModel::createModelFromFile(arcDevice, "models/flat_vase.obj");
 
-        auto cube = ArcGameObject::createGameObject();
-        cube.model = arcModel;
-        cube.transform.translation = {0.f, 0.f, 2.5f};
-        cube.transform.scale = {0.5f, 0.5f, 0.5f};
-        gameObjects.push_back(std::move(cube));
+        auto gameObj = ArcGameObject::createGameObject();
+        gameObj.model = arcModel;
+        gameObj.transform.translation = {0.f, 0.5f, 2.5f};
+        gameObj.transform.scale = {1.0f, 1.5f, 1.0f};
+        gameObjects.push_back(std::move(gameObj));
     }
 }
