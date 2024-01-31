@@ -13,8 +13,7 @@ namespace arc
 {
     struct SimplePushConstantData
     {
-        glm::mat2 transform{1.0f};
-        glm::vec2 offset;
+        glm::mat4 transform{1.0f};
         alignas(16) glm::vec3 color;
     };
 
@@ -66,18 +65,17 @@ namespace arc
             pipelineConfig);
     }
 
-    void SimpleRenderSystem::renderGameObjects(VkCommandBuffer commandBuffer, std::vector<ArcGameObject> &gameObjects)
+    void SimpleRenderSystem::renderGameObjects(VkCommandBuffer commandBuffer, std::vector<ArcGameObject> &gameObjects, const ArcCamera &camera)
     {
         arcPipeline->bind(commandBuffer);
 
+        auto projectionView = camera.getProjection() * camera.getView();
+
         for (auto &obj : gameObjects)
         {
-            obj.transform2D.rotation = glm::mod(obj.transform2D.rotation + 0.01f, glm::two_pi<float>());
-
             SimplePushConstantData push{};
-            push.offset = obj.transform2D.translation;
             push.color = obj.color;
-            push.transform = obj.transform2D.mat2();
+            push.transform = projectionView * obj.transform.mat4();
 
             vkCmdPushConstants(commandBuffer,
                                pipelineLayout,

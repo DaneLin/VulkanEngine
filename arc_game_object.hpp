@@ -3,25 +3,32 @@
 
 #include "arc_model.hpp"
 
+// libs
+#include <glm/gtc/matrix_transform.hpp>
+
 // std
 #include <memory>
 
 namespace arc
 {
-    struct Transform2DComponent
+    struct TransformComponent
     {
-        glm::vec2 translation{};
-        glm::vec2 scale{1.0f, 1.0f};
-        float rotation;
+        glm::vec3 translation{};
+        glm::vec3 scale{1.0f, 1.0f, 1.0f};
+        glm::vec3 rotation{};
 
-        glm::mat2 mat2()
+        // Matrix corresponds to translate * Ry * Rx * Rz * scale transformation
+        // Rotation convention uses tait-bryan angles with axis order Y(1), X(2), Z(3)
+        glm::mat4 mat4()
         {
-            const float sine = glm::sin(rotation);
-            const float cosine = glm::cos(rotation);
-            glm::mat2 rotMatrix{{cosine, sine}, {-sine, cosine}};
+            auto transform = glm::translate(glm::mat4{1.0f}, translation);
 
-            glm::mat2 scaleMat{{scale.x, 0.f}, {0.f, scale.y}};
-            return rotMatrix * scaleMat;
+            transform = glm::rotate(transform, rotation.y, {0.0f, 1.0f, 0.0f});
+            transform = glm::rotate(transform, rotation.x, {1.0f, 0.0f, 0.0f});
+            transform = glm::rotate(transform, rotation.z, {0.0f, 0.0f, 1.0f});
+
+            transform = glm::scale(transform, scale);
+            return transform;
         }
     };
 
@@ -45,7 +52,7 @@ namespace arc
 
         std::shared_ptr<ArcModel> model{};
         glm::vec3 color{};
-        Transform2DComponent transform2D;
+        TransformComponent transform{};
 
     private:
         ArcGameObject(id_t objId) : id{objId} {}

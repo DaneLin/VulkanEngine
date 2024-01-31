@@ -20,7 +20,7 @@ namespace arc
         ArcRenderer operator=(const ArcRenderer &) = delete;
 
         VkRenderPass getSwapChainRenderPass() const { return arcSwapChain->getRenderPass(); }
-
+        float getAspectRatio() const { return arcSwapChain->extentAspectRatio(); }
         bool isFrameInProgress() const { return isFrameStarted; }
 
         VkCommandBuffer getCurrentCommandBuffer() const

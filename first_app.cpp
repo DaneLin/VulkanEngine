@@ -1,5 +1,7 @@
 #include "first_app.hpp"
+#include "arc_camera.hpp"
 #include "simple_render_system.hpp"
+#include "keyboard_movement_controller.hpp"
 
 // libs
 #define GLM_FORCE_RADIANS
@@ -7,6 +9,8 @@
 #include <glm/glm.hpp>
 #include <glm/gtc/constants.hpp>
 
+// std
+#include <chrono>
 #include <stdexcept>
 #include <array>
 
@@ -24,14 +28,35 @@ namespace arc
     void FirstApp::run()
     {
         SimpleRenderSystem simpleRenderSystem{arcDevice, arcRenderer.getSwapChainRenderPass()};
+        ArcCamera camera{};
+        // camera.setViewDirection(glm::vec3{0.f}, glm::vec3(0.5f, 0.f, 1.f));
+        camera.setViewTarget(glm::vec3(-1.f, -2.f, -2.f), glm::vec3(0.f, 0.f, 2.5f));
+
+        auto viewObject = ArcGameObject::createGameObject();
+        KeyboardMovementController cameraController{};
+
+        auto currentTime = std::chrono::high_resolution_clock::now();
+
         while (!arcWindow.shouldClose())
         {
             glfwPollEvents();
 
+            auto newTime = std::chrono::high_resolution_clock::now();
+            float frameTime = std::chrono::duration<float, std::chrono::seconds::period>(newTime - currentTime).count();
+
+            currentTime = newTime;
+
+            cameraController.moveInPlaneXZ(arcWindow.getGLFWwindow(), frameTime, viewObject);
+            camera.setViewYXZ(viewObject.transform.translation, viewObject.transform.rotation);
+
+            float aspect = arcRenderer.getAspectRatio();
+            // camera.setOrthographicProjection(-aspect, aspect, -1, 1, -1, 1);
+            camera.setPerspectiveProjection(glm::radians(50.0f), aspect, 0.1f, 10.f);
+
             if (auto commandBuffer = arcRenderer.beginFrame())
             {
                 arcRenderer.beginSwapChainRenderPass(commandBuffer);
-                simpleRenderSystem.renderGameObjects(commandBuffer, gameObjects);
+                simpleRenderSystem.renderGameObjects(commandBuffer, gameObjects, camera);
                 arcRenderer.endSwapChainRenderPass(commandBuffer);
                 arcRenderer.endFrame();
             }
@@ -40,24 +65,74 @@ namespace arc
         vkDeviceWaitIdle(arcDevice.device());
     }
 
-    void FirstApp::loadGameObjects()
+    std::unique_ptr<ArcModel> createCubeModel(ArcDevice &device, glm::vec3 offset)
     {
         std::vector<ArcModel::Vertex> vertices{
-            {{0.0f, -0.5f}, {1.0f, 0.0f, 0.0f}},
-            {{0.5f, 0.5f}, {0.0f, 1.0f, 0.0f}},
-            {{-0.5f, 0.5f}, {0.0f, 0.0f, 1.0f}}};
-        // std::vector<ArcModel::Vertex> vertices{};
-        // sierpinski(vertices, 5, {-0.5f, 0.5f}, {0.5f, 0.5f}, {0.0f, -0.5f});
+            // left face
+            {{-0.5f, -0.5f, -0.5f}, {0.9f, 0.9f, 0.9f}},
+            {{-0.5f, 0.5f, 0.5f}, {0.9f, 0.9f, 0.9f}},
+            {{-0.5f, -0.5f, 0.5f}, {0.9f, 0.9f, 0.9f}},
+            {{-0.5f, -0.5f, -0.5f}, {0.9f, 0.9f, 0.9f}},
+            {{-0.5f, 0.5f, -0.5f}, {0.9f, 0.9f, 0.9f}},
+            {{-0.5f, 0.5f, 0.5f}, {0.9f, 0.9f, 0.9f}},
 
-        auto arcModel = std::make_shared<ArcModel>(arcDevice, vertices);
+            // right face
+            {{0.5f, -0.5f, -0.5f}, {0.8f, 0.9f, 0.1f}},
+            {{0.5f, 0.5f, 0.5f}, {0.8f, 0.9f, 0.1f}},
+            {{0.5f, -0.5f, 0.5f}, {0.8f, 0.9f, 0.1f}},
+            {{0.5f, -0.5f, -0.5f}, {0.8f, 0.9f, 0.1f}},
+            {{0.5f, 0.5f, -0.5f}, {0.8f, 0.9f, 0.1f}},
+            {{0.5f, 0.5f, 0.5f}, {0.9f, 0.9f, 0.1f}},
 
-        auto triangle = ArcGameObject::createGameObject();
-        triangle.model = arcModel;
-        triangle.color = {0.1f, 0.8f, 0.1f};
-        triangle.transform2D.translation.x = .2f;
-        triangle.transform2D.scale = {2.0f, 0.5f};
-        triangle.transform2D.rotation = 0.25 * glm::two_pi<float>();
+            // top face (orange, remember y axis points down)
+            {{-0.5f, -0.5f, -0.5f}, {0.9f, 0.6f, 0.1f}},
+            {{0.5f, -0.5f, 0.5f}, {0.8f, 0.8f, 0.1f}},
+            {{-0.5f, -0.5f, 0.5f}, {0.8f, 0.8f, 0.1f}},
+            {{-0.5f, -0.5f, -0.5f}, {0.9f, 0.6f, 0.1f}},
+            {{0.5f, -0.5f, -0.5f}, {0.9f, 0.6f, 0.1f}},
+            {{0.5f, -0.5f, 0.5f}, {0.9f, 0.6f, 0.1f}},
 
-        gameObjects.push_back(std::move(triangle));
+            // bottom face
+            {{-0.5f, 0.5f, -0.5f}, {0.9f, 0.6f, 0.1f}},
+            {{0.5f, 0.5f, 0.5f}, {0.8f, 0.8f, 0.1f}},
+            {{-0.5f, 0.5f, 0.5f}, {0.8f, 0.8f, 0.1f}},
+            {{-0.5f, 0.5f, -0.5f}, {0.9f, 0.6f, 0.1f}},
+            {{0.5f, 0.5f, -0.5f}, {0.9f, 0.6f, 0.1f}},
+            {{0.5f, 0.5f, 0.5f}, {0.9f, 0.6f, 0.1f}},
+
+            // nose face
+            {{-0.5f, -0.5f, 0.5f}, {0.1f, 0.1f, 0.8f}},
+            {{0.5f, 0.5f, 0.5f}, {0.1f, 0.1f, 0.8f}},
+            {{-0.5f, 0.5f, 0.5f}, {0.1f, 0.1f, 0.8f}},
+            {{-0.5f, -0.5f, 0.5f}, {0.1f, 0.1f, 0.8f}},
+            {{0.5f, -0.5f, 0.5f}, {0.1f, 0.1f, 0.8f}},
+            {{0.5f, 0.5f, 0.5f}, {0.1f, 0.1f, 0.8f}},
+
+            // tail face
+            {{-0.5f, -0.5f, -0.5f}, {0.1f, 0.8f, 0.1f}},
+            {{0.5f, 0.5f, -0.5f}, {0.1f, 0.8f, 0.1f}},
+            {{-0.5f, 0.5f, -0.5f}, {0.1f, 0.8f, 0.1f}},
+            {{-0.5f, -0.5f, -0.5f}, {0.1f, 0.8f, 0.1f}},
+            {{0.5f, -0.5f, -0.5f}, {0.1f, 0.8f, 0.1f}},
+            {{0.5f, 0.5f, -0.5f}, {0.1f, 0.8f, 0.1f}},
+        };
+
+        for (auto &v : vertices)
+        {
+            v.position += offset;
+        }
+
+        return std::make_unique<ArcModel>(device, vertices);
+    }
+
+    void FirstApp::loadGameObjects()
+    {
+        std::shared_ptr<ArcModel> arcModel = createCubeModel(arcDevice, {0.f, 0.f, 0.f});
+
+        auto cube = ArcGameObject::createGameObject();
+        cube.model = arcModel;
+        cube.transform.translation = {0.f, 0.f, 2.5f};
+        cube.transform.scale = {0.5f, 0.5f, 0.5f};
+        gameObjects.push_back(std::move(cube));
     }
 }

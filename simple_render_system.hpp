@@ -1,5 +1,6 @@
 #pragma once
 
+#include "arc_camera.hpp"
 #include "arc_pipeline.hpp"
 #include "arc_device.hpp"
 #include "arc_game_object.hpp"
@@ -18,7 +19,7 @@ namespace arc
         SimpleRenderSystem(const SimpleRenderSystem &) = delete;
         SimpleRenderSystem operator=(const SimpleRenderSystem &) = delete;
 
-        void renderGameObjects(VkCommandBuffer commandBuffer, std::vector<ArcGameObject> &gameObjects);
+        void renderGameObjects(VkCommandBuffer commandBuffer, std::vector<ArcGameObject> &gameObjects, const ArcCamera &camera);
 
     private:
         void createPipelineLayout();
