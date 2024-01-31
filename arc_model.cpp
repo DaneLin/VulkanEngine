@@ -32,16 +32,23 @@ namespace arc
         return attributeDescriptions;
     }
 
-    ArcModel::ArcModel(ArcDevice &device, const std::vector<Vertex> &vertices)
+    ArcModel::ArcModel(ArcDevice &device, const ArcModel::Builder &builder)
         : arcDevice{device}
     {
-        createVertexBuffers(vertices);
+        createVertexBuffers(builder.vertices);
+        createIndexBuffers(builder.indices);
     }
 
     ArcModel::~ArcModel()
     {
         vkDestroyBuffer(arcDevice.device(), vertexBuffer, nullptr);
         vkFreeMemory(arcDevice.device(), vertexBufferMemory, nullptr);
+
+        if (hasIndexBuffer)
+        {
+            vkDestroyBuffer(arcDevice.device(), indexBuffer, nullptr);
+            vkFreeMemory(arcDevice.device(), indexBufferMemory, nullptr);
+        }
     }
 
     void ArcModel::createVertexBuffers(const std::vector<Vertex> &vertices)
@@ -51,23 +58,84 @@ namespace arc
 
         VkDeviceSize bufferSize = sizeof(vertices[0]) * vertexCount;
 
+        VkBuffer stagingBuffer;
+        VkDeviceMemory stagingBufferMemory;
+
         arcDevice.createBuffer(
             bufferSize,
-            VK_BUFFER_USAGE_VERTEX_BUFFER_BIT,
+            VK_BUFFER_USAGE_TRANSFER_SRC_BIT,
             VK_MEMORY_PROPERTY_HOST_VISIBLE_BIT | VK_MEMORY_PROPERTY_HOST_COHERENT_BIT,
-            vertexBuffer,
-            vertexBufferMemory);
+            stagingBuffer,
+            stagingBufferMemory);
 
         void *data;
         // create a region of host memory mapped to device memory
-        vkMapMemory(arcDevice.device(), vertexBufferMemory, 0, bufferSize, 0, &data);
+        vkMapMemory(arcDevice.device(), stagingBufferMemory, 0, bufferSize, 0, &data);
         memcpy(data, vertices.data(), static_cast<size_t>(bufferSize));
-        vkUnmapMemory(arcDevice.device(), vertexBufferMemory);
+        vkUnmapMemory(arcDevice.device(), stagingBufferMemory);
+
+        arcDevice.createBuffer(
+            bufferSize,
+            VK_BUFFER_USAGE_VERTEX_BUFFER_BIT | VK_BUFFER_USAGE_TRANSFER_DST_BIT,
+            VK_MEMORY_PROPERTY_DEVICE_LOCAL_BIT,
+            vertexBuffer,
+            vertexBufferMemory);
+
+        arcDevice.copyBuffer(stagingBuffer, vertexBuffer, bufferSize);
+
+        vkDestroyBuffer(arcDevice.device(), stagingBuffer, nullptr);
+        vkFreeMemory(arcDevice.device(), stagingBufferMemory, nullptr);
+    }
+
+    void ArcModel::createIndexBuffers(const std::vector<uint32_t> &indices)
+    {
+        indexCount = static_cast<uint32_t>(indices.size());
+        hasIndexBuffer = indexCount > 0;
+
+        if (!hasIndexBuffer)
+            return;
+
+        VkDeviceSize bufferSize = sizeof(indices[0]) * indexCount;
+
+        VkBuffer stagingBuffer;
+        VkDeviceMemory stagingBufferMemory;
+
+        arcDevice.createBuffer(
+            bufferSize,
+            VK_BUFFER_USAGE_TRANSFER_SRC_BIT,
+            VK_MEMORY_PROPERTY_HOST_VISIBLE_BIT | VK_MEMORY_PROPERTY_HOST_COHERENT_BIT,
+            stagingBuffer,
+            stagingBufferMemory);
+
+        void *data;
+        // create a region of host memory mapped to device memory
+        vkMapMemory(arcDevice.device(), stagingBufferMemory, 0, bufferSize, 0, &data);
+        memcpy(data, indices.data(), static_cast<size_t>(bufferSize));
+        vkUnmapMemory(arcDevice.device(), stagingBufferMemory);
+
+        arcDevice.createBuffer(
+            bufferSize,
+            VK_BUFFER_USAGE_INDEX_BUFFER_BIT | VK_BUFFER_USAGE_TRANSFER_DST_BIT,
+            VK_MEMORY_PROPERTY_DEVICE_LOCAL_BIT,
+            indexBuffer,
+            indexBufferMemory);
+
+        arcDevice.copyBuffer(stagingBuffer, indexBuffer, bufferSize);
+
+        vkDestroyBuffer(arcDevice.device(), stagingBuffer, nullptr);
+        vkFreeMemory(arcDevice.device(), stagingBufferMemory, nullptr);
     }
 
     void ArcModel::draw(VkCommandBuffer commandBuffer)
     {
-        vkCmdDraw(commandBuffer, vertexCount, 1, 0, 0);
+        if (hasIndexBuffer)
+        {
+            vkCmdDrawIndexed(commandBuffer, indexCount, 1, 0, 0, 0);
+        }
+        else
+        {
+            vkCmdDraw(commandBuffer, vertexCount, 1, 0, 0);
+        }
     }
 
     void ArcModel::bind(VkCommandBuffer commandBuffer)
@@ -75,6 +143,11 @@ namespace arc
         VkBuffer buffers[] = {vertexBuffer};
         VkDeviceSize offsets[] = {0};
         vkCmdBindVertexBuffers(commandBuffer, 0, 1, buffers, offsets);
+
+        if (hasIndexBuffer)
+        {
+            vkCmdBindIndexBuffer(commandBuffer, indexBuffer, 0, VK_INDEX_TYPE_UINT32);
+        }
     }
 
 }

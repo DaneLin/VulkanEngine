@@ -25,7 +25,13 @@ namespace arc
             static std::vector<VkVertexInputAttributeDescription> getAttributeDescriptions();
         };
 
-        ArcModel(ArcDevice &device, const std::vector<Vertex> &vertices);
+        struct Builder
+        {
+            std::vector<Vertex> vertices{};
+            std::vector<uint32_t> indices{};
+        };
+
+        ArcModel(ArcDevice &device, const ArcModel::Builder &builder);
         ~ArcModel();
 
         ArcModel(const ArcModel &) = delete;
@@ -36,12 +42,18 @@ namespace arc
 
     private:
         void createVertexBuffers(const std::vector<Vertex> &vertices);
+        void createIndexBuffers(const std::vector<uint32_t> &indices);
 
     private:
         ArcDevice &arcDevice;
         VkBuffer vertexBuffer;
         VkDeviceMemory vertexBufferMemory;
         uint32_t vertexCount;
+
+        bool hasIndexBuffer = false;
+        VkBuffer indexBuffer;
+        VkDeviceMemory indexBufferMemory;
+        uint32_t indexCount;
     };
 }
 #endif // __ARC_MODEL_H__
