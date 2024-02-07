@@ -92,6 +92,6 @@ namespace arc
     size_t currentFrame = 0;
   };
 
-} // namespace lve
+} // namespace Arc
 
 #endif // __ARC_SWAP_CHAIN_H__

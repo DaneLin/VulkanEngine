@@ -4,6 +4,7 @@
 #include "arc_device.hpp"
 #include "arc_game_object.hpp"
 #include "arc_renderer.hpp"
+#include "arc_descriptors.hpp"
 
 // std
 #include <vector>
@@ -32,6 +33,8 @@ namespace arc
         ArcWindow arcWindow{WIDTH, HEIGHT, "Hello Vulkan!"};
         ArcDevice arcDevice{arcWindow};
         ArcRenderer arcRenderer{arcWindow, arcDevice};
+
+        std::unique_ptr<ArcDescriptorPool> globalPool{};
         std::vector<ArcGameObject> gameObjects;
     };
 } // namespace arc

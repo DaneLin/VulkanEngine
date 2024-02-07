@@ -110,5 +110,5 @@ namespace arc
     const std::vector<const char *> deviceExtensions = {VK_KHR_SWAPCHAIN_EXTENSION_NAME};
   };
 
-} // namespace lve
+} // namespace Arc
 #endif // __ARC_DEVICE_H__

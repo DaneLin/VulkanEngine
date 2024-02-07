@@ -37,6 +37,7 @@ namespace arc
         };
     }
 
+    // translation won't affect the normal vector
     glm::mat3 TransformComponent::normalMatrix()
     {
         const float c3 = glm::cos(rotation.z);

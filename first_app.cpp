@@ -2,6 +2,7 @@
 #include "arc_camera.hpp"
 #include "simple_render_system.hpp"
 #include "keyboard_movement_controller.hpp"
+#include "arc_frame_info.hpp"
 
 // libs
 #define GLM_FORCE_RADIANS
@@ -10,14 +11,27 @@
 #include <glm/gtc/constants.hpp>
 
 // std
+#include <iostream>
 #include <chrono>
 #include <stdexcept>
 #include <array>
 
 namespace arc
 {
+
+    struct GlobalUbo
+    {
+        glm::mat4 projectionView{1.0f};
+        glm::vec3 lightDirection = glm::normalize(glm::vec3(1.f, -3.f, -1.f));
+    };
+
     FirstApp::FirstApp()
     {
+        globalPool = ArcDescriptorPool::Builder(arcDevice)
+                         .setMaxSets(ArcSwapChain::MAX_FRAMES_IN_FLIGHT)
+                         .addPoolSize(VK_DESCRIPTOR_TYPE_UNIFORM_BUFFER, ArcSwapChain::MAX_FRAMES_IN_FLIGHT)
+                         .build();
+
         loadGameObjects();
     }
 
@@ -27,10 +41,34 @@ namespace arc
 
     void FirstApp::run()
     {
-        SimpleRenderSystem simpleRenderSystem{arcDevice, arcRenderer.getSwapChainRenderPass()};
+        std::vector<std::unique_ptr<ArcBuffer>> globalUboBuffers(ArcSwapChain::MAX_FRAMES_IN_FLIGHT);
+        for (int i = 0; i < globalUboBuffers.size(); ++i)
+        {
+            globalUboBuffers[i] = std::make_unique<ArcBuffer>(
+                arcDevice,
+                sizeof(GlobalUbo),
+                1,
+                VK_BUFFER_USAGE_UNIFORM_BUFFER_BIT,
+                VK_MEMORY_PROPERTY_HOST_VISIBLE_BIT);
+            globalUboBuffers[i]->map();
+        }
+
+        auto globalSetLayout = ArcDescriptorSetLayout::Builder(arcDevice)
+                                   .addBinding(0, VK_DESCRIPTOR_TYPE_UNIFORM_BUFFER, VK_SHADER_STAGE_VERTEX_BIT)
+                                   .build();
+
+        std::vector<VkDescriptorSet> globalDescriptorSets(ArcSwapChain::MAX_FRAMES_IN_FLIGHT);
+        for (int i = 0; i < globalDescriptorSets.size(); ++i)
+        {
+            auto bufferInfo = globalUboBuffers[i]->descriptorInfo();
+            ArcDescriptorWriter(*globalSetLayout, *globalPool)
+                .writeBuffer(0, &bufferInfo)
+                .build(globalDescriptorSets[i]);
+        }
+
+        SimpleRenderSystem simpleRenderSystem{arcDevice, arcRenderer.getSwapChainRenderPass(), globalSetLayout->getDescriptorSetLayout()};
         ArcCamera camera{};
         // camera.setViewDirection(glm::vec3{0.f}, glm::vec3(0.5f, 0.f, 1.f));
-        camera.setViewTarget(glm::vec3(-1.f, -2.f, -2.f), glm::vec3(0.f, 0.f, 2.5f));
 
         auto viewObject = ArcGameObject::createGameObject();
         KeyboardMovementController cameraController{};
@@ -41,9 +79,9 @@ namespace arc
         {
             glfwPollEvents();
 
+            // calculate the delta time for game loop
             auto newTime = std::chrono::high_resolution_clock::now();
             float frameTime = std::chrono::duration<float, std::chrono::seconds::period>(newTime - currentTime).count();
-
             currentTime = newTime;
 
             cameraController.moveInPlaneXZ(arcWindow.getGLFWwindow(), frameTime, viewObject);
@@ -52,11 +90,27 @@ namespace arc
             float aspect = arcRenderer.getAspectRatio();
             // camera.setOrthographicProjection(-aspect, aspect, -1, 1, -1, 1);
             camera.setPerspectiveProjection(glm::radians(50.0f), aspect, 0.1f, 10.f);
-
+            // each update advanced game time by a certain time
+            // it taks a certain amount of real time to process that
             if (auto commandBuffer = arcRenderer.beginFrame())
             {
+                int frameIndex = arcRenderer.getFrameIndex();
+                FrameInfo frameInfo{
+                    frameIndex,
+                    frameTime,
+                    commandBuffer,
+                    camera,
+                    globalDescriptorSets[frameIndex]};
+
+                // update
+                GlobalUbo ubo{};
+                ubo.projectionView = camera.getProjection() * camera.getView();
+                globalUboBuffers[frameIndex]->writeToBuffer(&ubo);
+                globalUboBuffers[frameIndex]->flush();
+
+                // render
                 arcRenderer.beginSwapChainRenderPass(commandBuffer);
-                simpleRenderSystem.renderGameObjects(commandBuffer, gameObjects, camera);
+                simpleRenderSystem.renderGameObjects(frameInfo, gameObjects);
                 arcRenderer.endSwapChainRenderPass(commandBuffer);
                 arcRenderer.endFrame();
             }
@@ -118,12 +172,19 @@ namespace arc
 
     void FirstApp::loadGameObjects()
     {
-        std::shared_ptr<ArcModel> arcModel = ArcModel::createModelFromFile(arcDevice, "models/flat_vase.obj");
+        std::shared_ptr<ArcModel> arcModel = ArcModel::createModelFromFile(arcDevice, "models/smooth_vase.obj");
 
         auto gameObj = ArcGameObject::createGameObject();
         gameObj.model = arcModel;
         gameObj.transform.translation = {0.f, 0.5f, 2.5f};
         gameObj.transform.scale = {1.0f, 1.5f, 1.0f};
         gameObjects.push_back(std::move(gameObj));
+
+        arcModel = ArcModel::createModelFromFile(arcDevice, "models/flat_vase.obj");
+        auto flatVase = ArcGameObject::createGameObject();
+        flatVase.model = arcModel;
+        flatVase.transform.translation = {.5f, .5f, 2.5f};
+        flatVase.transform.scale = {3.0f, 1.6f, 3.f};
+        gameObjects.push_back(std::move(flatVase));
     }
 }

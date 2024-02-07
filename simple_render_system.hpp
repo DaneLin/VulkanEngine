@@ -4,6 +4,7 @@
 #include "arc_pipeline.hpp"
 #include "arc_device.hpp"
 #include "arc_game_object.hpp"
+#include "arc_frame_info.hpp"
 
 // std
 #include <vector>
@@ -13,16 +14,16 @@ namespace arc
     class SimpleRenderSystem
     {
     public:
-        SimpleRenderSystem(ArcDevice &device, VkRenderPass renderPass);
+        SimpleRenderSystem(ArcDevice &device, VkRenderPass renderPass, VkDescriptorSetLayout globalSetLayout);
         ~SimpleRenderSystem();
 
         SimpleRenderSystem(const SimpleRenderSystem &) = delete;
         SimpleRenderSystem operator=(const SimpleRenderSystem &) = delete;
 
-        void renderGameObjects(VkCommandBuffer commandBuffer, std::vector<ArcGameObject> &gameObjects, const ArcCamera &camera);
+        void renderGameObjects(FrameInfo &frameInfo, std::vector<ArcGameObject> &gameObjects);
 
     private:
-        void createPipelineLayout();
+        void createPipelineLayout(VkDescriptorSetLayout globalSetLayout);
         void createPipeline(VkRenderPass renderPass);
 
     private:

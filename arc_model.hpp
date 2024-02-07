@@ -2,6 +2,7 @@
 #define __ARC_MODEL_H__
 
 #include "arc_device.hpp"
+#include "arc_buffer.hpp"
 
 // libs
 #define GLM_FORCE_RADIANS
@@ -58,13 +59,13 @@ namespace arc
 
     private:
         ArcDevice &arcDevice;
-        VkBuffer vertexBuffer;
-        VkDeviceMemory vertexBufferMemory;
+
+        std::unique_ptr<ArcBuffer> vertexBuffer;
         uint32_t vertexCount;
 
         bool hasIndexBuffer = false;
-        VkBuffer indexBuffer;
-        VkDeviceMemory indexBufferMemory;
+
+        std::unique_ptr<ArcBuffer> indexBuffer;
         uint32_t indexCount;
     };
 }
