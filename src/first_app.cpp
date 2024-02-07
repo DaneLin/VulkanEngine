@@ -22,7 +22,11 @@ namespace arc
     struct GlobalUbo
     {
         glm::mat4 projectionView{1.0f};
-        glm::vec3 lightDirection = glm::normalize(glm::vec3(1.f, -3.f, -1.f));
+        // glm::vec3 lightDirection = glm::normalize(glm::vec3(1.f, -3.f, -1.f));
+        //  point light settings
+        glm::vec4 ambientLightColor{1.f, 1.f, 1.f, .02f}; // w represents the intensity of light
+        glm::vec3 lightPosition{-1.f};
+        alignas(16) glm::vec4 lightColor{1.f}; // w represents the intensity of light
     };
 
     FirstApp::FirstApp()
@@ -54,7 +58,7 @@ namespace arc
         }
 
         auto globalSetLayout = ArcDescriptorSetLayout::Builder(arcDevice)
-                                   .addBinding(0, VK_DESCRIPTOR_TYPE_UNIFORM_BUFFER, VK_SHADER_STAGE_VERTEX_BIT)
+                                   .addBinding(0, VK_DESCRIPTOR_TYPE_UNIFORM_BUFFER, VK_SHADER_STAGE_ALL_GRAPHICS)
                                    .build();
 
         std::vector<VkDescriptorSet> globalDescriptorSets(ArcSwapChain::MAX_FRAMES_IN_FLIGHT);
@@ -100,7 +104,8 @@ namespace arc
                     frameTime,
                     commandBuffer,
                     camera,
-                    globalDescriptorSets[frameIndex]};
+                    globalDescriptorSets[frameIndex],
+                    gameObjects};
 
                 // update
                 GlobalUbo ubo{};
@@ -110,7 +115,7 @@ namespace arc
 
                 // render
                 arcRenderer.beginSwapChainRenderPass(commandBuffer);
-                simpleRenderSystem.renderGameObjects(frameInfo, gameObjects);
+                simpleRenderSystem.renderGameObjects(frameInfo);
                 arcRenderer.endSwapChainRenderPass(commandBuffer);
                 arcRenderer.endFrame();
             }
@@ -176,15 +181,22 @@ namespace arc
 
         auto gameObj = ArcGameObject::createGameObject();
         gameObj.model = arcModel;
-        gameObj.transform.translation = {0.f, 0.5f, 2.5f};
+        gameObj.transform.translation = {0.f, 0.5f, 0.f};
         gameObj.transform.scale = {1.0f, 1.5f, 1.0f};
-        gameObjects.push_back(std::move(gameObj));
+        gameObjects.emplace(gameObj.getID(), std::move(gameObj));
 
         arcModel = ArcModel::createModelFromFile(arcDevice, "models/flat_vase.obj");
         auto flatVase = ArcGameObject::createGameObject();
         flatVase.model = arcModel;
-        flatVase.transform.translation = {.5f, .5f, 2.5f};
+        flatVase.transform.translation = {.5f, .5f, 0.f};
         flatVase.transform.scale = {3.0f, 1.6f, 3.f};
-        gameObjects.push_back(std::move(flatVase));
+        gameObjects.emplace(flatVase.getID(), std::move(flatVase));
+
+        arcModel = ArcModel::createModelFromFile(arcDevice, "models/quad.obj");
+        auto floor = ArcGameObject::createGameObject();
+        floor.model = arcModel;
+        floor.transform.translation = {0.f, .5f, 0.f};
+        floor.transform.scale = {3.0f, 1.f, 3.f};
+        gameObjects.emplace(floor.getID(), std::move(floor));
     }
 }

@@ -35,6 +35,6 @@ namespace arc
         ArcRenderer arcRenderer{arcWindow, arcDevice};
 
         std::unique_ptr<ArcDescriptorPool> globalPool{};
-        std::vector<ArcGameObject> gameObjects;
+        ArcGameObject::Map gameObjects;
     };
 } // namespace arc

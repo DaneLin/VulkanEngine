@@ -8,6 +8,7 @@
 
 // std
 #include <memory>
+#include <unordered_map>
 
 namespace arc
 {
@@ -27,6 +28,7 @@ namespace arc
     {
     public:
         using id_t = unsigned int;
+        using Map = std::unordered_map<id_t, ArcGameObject>;
 
         static ArcGameObject createGameObject()
         {

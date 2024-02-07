@@ -6,6 +6,10 @@
 #include <iostream>
 #include <cassert>
 
+#ifndef ENGINE_DIR
+#define ENGINE_DIR "../"
+#endif
+
 namespace arc
 {
     ArcPipeline::ArcPipeline(ArcDevice &device, const std::string &vertFilePath, const std::string &fragFilePath, const PipelineConfigInfo &configInfo)
@@ -163,7 +167,8 @@ namespace arc
 
     std::vector<char> ArcPipeline::readFile(const std::string &filepath)
     {
-        std::ifstream file{filepath, std::ios::ate | std::ios::binary};
+        std::string enginePath = ENGINE_DIR + filepath;
+        std::ifstream file{enginePath, std::ios::ate | std::ios::binary};
 
         if (!file.is_open())
         {

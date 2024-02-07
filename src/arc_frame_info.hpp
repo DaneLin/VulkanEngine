@@ -2,6 +2,7 @@
 #define __ARC_FRAME_INFO_H__
 
 #include "arc_camera.hpp"
+#include "arc_game_object.hpp"
 
 // lib
 #include <vulkan/vulkan.h>
@@ -15,6 +16,7 @@ namespace arc
         VkCommandBuffer commandBuffer;
         ArcCamera &camera;
         VkDescriptorSet globalDescriptorSet;
+        ArcGameObject::Map &gameObjects;
     };
 
 }

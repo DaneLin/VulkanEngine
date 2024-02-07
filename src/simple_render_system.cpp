@@ -67,7 +67,7 @@ namespace arc
             pipelineConfig);
     }
 
-    void SimpleRenderSystem::renderGameObjects(FrameInfo &frameInfo, std::vector<ArcGameObject> &gameObjects)
+    void SimpleRenderSystem::renderGameObjects(FrameInfo &frameInfo)
     {
         arcPipeline->bind(frameInfo.commandBuffer);
 
@@ -79,8 +79,9 @@ namespace arc
             &frameInfo.globalDescriptorSet,
             0, nullptr);
 
-        for (auto &obj : gameObjects)
+        for (auto &kv : frameInfo.gameObjects)
         {
+            auto &obj = kv.second;
             SimplePushConstantData push{};
             push.modelMatrix = obj.transform.mat4();
             push.normalMatrix = obj.transform.normalMatrix();
