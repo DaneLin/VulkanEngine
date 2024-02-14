@@ -1,6 +1,7 @@
 #include "first_app.hpp"
 #include "arc_camera.hpp"
-#include "simple_render_system.hpp"
+#include "systems/simple_render_system.hpp"
+#include "systems/point_light_system.hpp"
 #include "keyboard_movement_controller.hpp"
 #include "arc_frame_info.hpp"
 
@@ -21,7 +22,8 @@ namespace arc
 
     struct GlobalUbo
     {
-        glm::mat4 projectionView{1.0f};
+        glm::mat4 projection{1.0f};
+        glm::mat4 view{1.f};
         // glm::vec3 lightDirection = glm::normalize(glm::vec3(1.f, -3.f, -1.f));
         //  point light settings
         glm::vec4 ambientLightColor{1.f, 1.f, 1.f, .02f}; // w represents the intensity of light
@@ -71,6 +73,7 @@ namespace arc
         }
 
         SimpleRenderSystem simpleRenderSystem{arcDevice, arcRenderer.getSwapChainRenderPass(), globalSetLayout->getDescriptorSetLayout()};
+        PointLightSystem pointLightSystem{arcDevice, arcRenderer.getSwapChainRenderPass(), globalSetLayout->getDescriptorSetLayout()};
         ArcCamera camera{};
         // camera.setViewDirection(glm::vec3{0.f}, glm::vec3(0.5f, 0.f, 1.f));
 
@@ -109,13 +112,15 @@ namespace arc
 
                 // update
                 GlobalUbo ubo{};
-                ubo.projectionView = camera.getProjection() * camera.getView();
+                ubo.projection = camera.getProjection();
+                ubo.view = camera.getView();
                 globalUboBuffers[frameIndex]->writeToBuffer(&ubo);
                 globalUboBuffers[frameIndex]->flush();
 
                 // render
                 arcRenderer.beginSwapChainRenderPass(commandBuffer);
                 simpleRenderSystem.renderGameObjects(frameInfo);
+                pointLightSystem.render(frameInfo);
                 arcRenderer.endSwapChainRenderPass(commandBuffer);
                 arcRenderer.endFrame();
             }
@@ -198,5 +203,11 @@ namespace arc
         floor.transform.translation = {0.f, .5f, 0.f};
         floor.transform.scale = {3.0f, 1.f, 3.f};
         gameObjects.emplace(floor.getID(), std::move(floor));
+
+        auto originCube = ArcGameObject::createGameObject();
+        originCube.model = createCubeModel(arcDevice, glm::vec3{0.0f});
+        originCube.transform.translation = {0.f, -0.5f, 0.f};
+        originCube.transform.scale = {1.0f, 1.f, 1.f};
+        gameObjects.emplace(originCube.getID(), std::move(originCube));
     }
 }
