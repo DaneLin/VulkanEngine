@@ -19,18 +19,6 @@
 
 namespace arc
 {
-
-    struct GlobalUbo
-    {
-        glm::mat4 projection{1.0f};
-        glm::mat4 view{1.f};
-        // glm::vec3 lightDirection = glm::normalize(glm::vec3(1.f, -3.f, -1.f));
-        //  point light settings
-        glm::vec4 ambientLightColor{1.f, 1.f, 1.f, .02f}; // w represents the intensity of light
-        glm::vec3 lightPosition{-1.f};
-        alignas(16) glm::vec4 lightColor{1.f}; // w represents the intensity of light
-    };
-
     FirstApp::FirstApp()
     {
         globalPool = ArcDescriptorPool::Builder(arcDevice)
@@ -114,6 +102,7 @@ namespace arc
                 GlobalUbo ubo{};
                 ubo.projection = camera.getProjection();
                 ubo.view = camera.getView();
+                pointLightSystem.update(frameInfo, ubo);
                 globalUboBuffers[frameIndex]->writeToBuffer(&ubo);
                 globalUboBuffers[frameIndex]->flush();
 
@@ -204,10 +193,25 @@ namespace arc
         floor.transform.scale = {3.0f, 1.f, 3.f};
         gameObjects.emplace(floor.getID(), std::move(floor));
 
-        auto originCube = ArcGameObject::createGameObject();
-        originCube.model = createCubeModel(arcDevice, glm::vec3{0.0f});
-        originCube.transform.translation = {0.f, -0.5f, 0.f};
-        originCube.transform.scale = {1.0f, 1.f, 1.f};
-        gameObjects.emplace(originCube.getID(), std::move(originCube));
+        std::vector<glm::vec3> lightColors{
+            {1.f, .1f, .1f},
+            {.1f, .1f, 1.f},
+            {.1f, 1.f, .1f},
+            {1.f, 1.f, .1f},
+            {.1f, 1.f, 1.f},
+            {1.f, 1.f, 1.f} //
+        };
+
+        for (int i = 0; i < lightColors.size(); i++)
+        {
+            auto pointLight = ArcGameObject::makePointLight(0.2f);
+            pointLight.color = lightColors[i];
+            auto rotateLight = glm::rotate(
+                glm::mat4(1.f),
+                (i * glm::two_pi<float>()) / lightColors.size(),
+                {0.f, -1.f, 0.f});
+            pointLight.transform.translation = glm::vec3(rotateLight * glm::vec4(-1.f, -1.f, -1.f, 1.f));
+            gameObjects.emplace(pointLight.getID(), std::move(pointLight));
+        }
     }
 }

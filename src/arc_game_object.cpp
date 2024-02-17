@@ -67,4 +67,14 @@ namespace arc
             }};
     }
 
+    ArcGameObject ArcGameObject::makePointLight(float intensity, float raidus, glm::vec3 lightColor)
+    {
+        ArcGameObject gameObj = ArcGameObject::createGameObject();
+        gameObj.pointLight = std::make_unique<PointLightComponent>();
+        gameObj.pointLight->lightIntensity = intensity;
+        gameObj.transform.scale.x = raidus;
+        gameObj.color = lightColor;
+        return gameObj;
+    }
+
 }
