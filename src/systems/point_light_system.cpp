@@ -8,6 +8,7 @@
 
 #include <stdexcept>
 #include <array>
+#include <map>
 
 namespace arc
 {
@@ -58,6 +59,7 @@ namespace arc
         assert(pipelineLayout != nullptr && "Cannot craete pipeline before pipeline layout!");
         PipelineConfigInfo pipelineConfig{};
         ArcPipeline::defaultPipelineConfigInfo(pipelineConfig);
+        ArcPipeline::enableAlphaBlending(pipelineConfig);
         pipelineConfig.bindingDescriptions.clear();
         pipelineConfig.attributeDescriptions.clear();
         pipelineConfig.renderPass = renderPass;
@@ -94,6 +96,20 @@ namespace arc
 
     void PointLightSystem::render(FrameInfo &frameInfo)
     {
+        // sort lights
+        std::map<float, ArcGameObject::id_t> sorted;
+        for (auto &kv : frameInfo.gameObjects)
+        {
+            auto &obj = kv.second;
+            if (obj.pointLight == nullptr)
+                continue;
+
+            // calculate distance
+            auto offset = frameInfo.camera.getPosition() - obj.transform.translation;
+            float disSquared = glm::dot(offset, offset);
+            sorted[disSquared] = obj.getID();
+        }
+
         arcPipeline->bind(frameInfo.commandBuffer);
 
         vkCmdBindDescriptorSets(
@@ -104,11 +120,11 @@ namespace arc
             &frameInfo.globalDescriptorSet,
             0, nullptr);
 
-        for (auto &kv : frameInfo.gameObjects)
+        // iterate through sorted lights in reverse order
+        for (auto it = sorted.rbegin(); it != sorted.rend(); ++it)
         {
-            auto &obj = kv.second;
-            if (obj.pointLight == nullptr)
-                continue;
+            // use game obj id to find light object
+            auto &obj = frameInfo.gameObjects.at(it->second);
 
             PointLightPushConstants push{};
             push.position = glm::vec4(obj.transform.translation, 1.f);
