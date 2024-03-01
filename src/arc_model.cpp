@@ -23,7 +23,7 @@ namespace std
     template <>
     struct hash<arc::ArcModel::Vertex>
     {
-        size_t operator()(arc::ArcModel::Vertex const &vertex) const
+        size_t operator()(arc::ArcModel::Vertex const &vertex) const noexcept
         {
             size_t seed = 0;
             arc::hashCombine(seed, vertex.position, vertex.color, vertex.normal, vertex.uv);
@@ -162,60 +162,88 @@ namespace arc
 
     void ArcModel::Builder::loadModel(const std::string &filepath)
     {
-        tinyobj::attrib_t attrib;
-        std::vector<tinyobj::shape_t> shapes;
-        std::vector<tinyobj::material_t> materials;
-        std::string warn, err;
+        // tinyobj::attrib_t attrib;
+        // std::vector<tinyobj::shape_t> shapes;
+        // std::vector<tinyobj::material_t> materials;
+        // std::string warn, err;
+
+        // std::string enginePath = ENGINE_DIR + filepath;
+        // if (!tinyobj::LoadObj(&attrib, &shapes, &materials, &warn, &err, enginePath.c_str()))
+        // {
+        //     throw std::runtime_error(warn + err);
+        // }
 
         std::string enginePath = ENGINE_DIR + filepath;
-        if (!tinyobj::LoadObj(&attrib, &shapes, &materials, &warn, &err, enginePath.c_str()))
+        tinyobj::ObjReaderConfig readerConfig;
+        tinyobj::ObjReader reader;
+        readerConfig.mtl_search_path = "";
+
+        if (!reader.ParseFromFile(enginePath, readerConfig))
         {
-            throw std::runtime_error(warn + err);
+            if (!reader.Error().empty())
+            {
+                throw std::runtime_error(reader.Error());
+            }
         }
+
+        if (!reader.Warning().empty())
+        {
+            std::cout << "TinyObjReader: " << reader.Warning() << '\n';
+        }
+
+        auto &attrib = reader.GetAttrib();
+        auto &shapes = reader.GetShapes();
 
         vertices.clear();
         indices.clear();
 
         std::unordered_map<Vertex, uint32_t> uniqueVertices{};
-        for (const auto &shape : shapes)
+        // loop over shapes
+        for (size_t s = 0; s < shapes.size(); ++s)
         {
-            for (const auto &index : shape.mesh.indices)
+            size_t indexOffset = 0;
+            for (size_t f = 0; f < shapes[s].mesh.num_face_vertices.size(); ++f)
             {
-                Vertex vertex{};
+                size_t fv = size_t(shapes[s].mesh.num_face_vertices[f]);
 
-                if (index.vertex_index >= 0)
+                for (size_t v = 0; v < fv; v++)
                 {
-                    vertex.position = {
-                        attrib.vertices[3 * index.vertex_index + 0],
-                        attrib.vertices[3 * index.vertex_index + 1],
-                        attrib.vertices[3 * index.vertex_index + 2]};
+                    // access to vertex
+                    tinyobj::index_t idx = shapes[s].mesh.indices[indexOffset + v];
+                    Vertex vertex{};
+                    if (idx.vertex_index >= 0)
+                    {
+                        vertex.position.x = attrib.vertices[3 * size_t(idx.vertex_index) + 0];
+                        vertex.position.y = attrib.vertices[3 * size_t(idx.vertex_index) + 1];
+                        vertex.position.z = attrib.vertices[3 * size_t(idx.vertex_index) + 2];
 
-                    vertex.color = {
-                        attrib.colors[3 * index.vertex_index + 0],
-                        attrib.colors[3 * index.vertex_index + 1],
-                        attrib.colors[3 * index.vertex_index + 2]};
-                }
+                        vertex.color.x = attrib.colors[3 * size_t(idx.vertex_index) + 0];
+                        vertex.color.y = attrib.colors[3 * size_t(idx.vertex_index) + 1];
+                        vertex.color.z = attrib.colors[3 * size_t(idx.vertex_index) + 2];
+                    }
 
-                if (index.normal_index >= 0)
-                {
-                    vertex.normal = {
-                        attrib.normals[3 * index.normal_index + 0],
-                        attrib.normals[3 * index.normal_index + 1],
-                        attrib.normals[3 * index.normal_index + 2]};
-                }
+                    // Check if normal index
+                    if (idx.normal_index >= 0)
+                    {
+                        vertex.normal.x = attrib.normals[3 * size_t(idx.normal_index) + 0];
+                        vertex.normal.y = attrib.normals[3 * size_t(idx.normal_index) + 1];
+                        vertex.normal.z = attrib.normals[3 * size_t(idx.normal_index) + 2];
+                    }
 
-                if (index.texcoord_index >= 0)
-                {
-                    vertex.uv = {
-                        attrib.normals[2 * index.texcoord_index + 0],
-                        attrib.normals[2 * index.texcoord_index + 1]};
+                    if (idx.texcoord_index >= 0)
+                    {
+                        vertex.uv.x = attrib.texcoords[2 * size_t(idx.texcoord_index) + 0];
+                        vertex.uv.y = attrib.texcoords[2 * size_t(idx.texcoord_index) + 1];
+                    }
+
+                    if (uniqueVertices.count(vertex) == 0)
+                    {
+                        uniqueVertices[vertex] = static_cast<uint32_t>(vertices.size());
+                        vertices.push_back(vertex);
+                    }
+                    indices.push_back(uniqueVertices[vertex]);
                 }
-                if (uniqueVertices.count(vertex) == 0)
-                {
-                    uniqueVertices[vertex] = static_cast<uint32_t>(vertices.size());
-                    vertices.push_back(vertex);
-                }
-                indices.push_back(uniqueVertices[vertex]);
+                indexOffset += fv;
             }
         }
     }

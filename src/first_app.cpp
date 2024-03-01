@@ -4,6 +4,7 @@
 #include "systems/point_light_system.hpp"
 #include "keyboard_movement_controller.hpp"
 #include "arc_frame_info.hpp"
+#include "arc_texture.hpp"
 
 // libs
 #define GLM_FORCE_RADIANS
@@ -21,9 +22,11 @@ namespace arc
 {
     FirstApp::FirstApp()
     {
+        // global pool for allocating descriptor sets
         globalPool = ArcDescriptorPool::Builder(arcDevice)
                          .setMaxSets(ArcSwapChain::MAX_FRAMES_IN_FLIGHT)
                          .addPoolSize(VK_DESCRIPTOR_TYPE_UNIFORM_BUFFER, ArcSwapChain::MAX_FRAMES_IN_FLIGHT)
+                         .addPoolSize(VK_DESCRIPTOR_TYPE_COMBINED_IMAGE_SAMPLER, ArcSwapChain::MAX_FRAMES_IN_FLIGHT)
                          .build();
 
         loadGameObjects();
@@ -36,6 +39,7 @@ namespace arc
     void FirstApp::run()
     {
         std::vector<std::unique_ptr<ArcBuffer>> globalUboBuffers(ArcSwapChain::MAX_FRAMES_IN_FLIGHT);
+        ArcTexture arcTeture{arcDevice, "images/texture.jpg"};
         for (int i = 0; i < globalUboBuffers.size(); ++i)
         {
             globalUboBuffers[i] = std::make_unique<ArcBuffer>(
@@ -49,14 +53,19 @@ namespace arc
 
         auto globalSetLayout = ArcDescriptorSetLayout::Builder(arcDevice)
                                    .addBinding(0, VK_DESCRIPTOR_TYPE_UNIFORM_BUFFER, VK_SHADER_STAGE_ALL_GRAPHICS)
+                                   .addBinding(1, VK_DESCRIPTOR_TYPE_COMBINED_IMAGE_SAMPLER, VK_SHADER_STAGE_FRAGMENT_BIT)
                                    .build();
 
         std::vector<VkDescriptorSet> globalDescriptorSets(ArcSwapChain::MAX_FRAMES_IN_FLIGHT);
         for (int i = 0; i < globalDescriptorSets.size(); ++i)
         {
             auto bufferInfo = globalUboBuffers[i]->descriptorInfo();
+
+            VkDescriptorImageInfo imageInfo = arcTeture.descriptorInfo();
+
             ArcDescriptorWriter(*globalSetLayout, *globalPool)
                 .writeBuffer(0, &bufferInfo)
+                .writeImage(1, &imageInfo)
                 .build(globalDescriptorSets[i]);
         }
 
@@ -200,8 +209,7 @@ namespace arc
             {.1f, 1.f, .1f},
             {1.f, 1.f, .1f},
             {.1f, 1.f, 1.f},
-            {1.f, 1.f, 1.f} //
-        };
+            {1.f, 1.f, 1.f}};
 
         for (int i = 0; i < lightColors.size(); i++)
         {

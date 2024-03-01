@@ -33,6 +33,8 @@ namespace arc
         VkDescriptorBufferInfo descriptorInfoForIndex(int index);
         VkResult invalidateIndex(int index);
 
+        void writeToImage(VkImage image, uint32_t width, uint32_t height);
+
         VkBuffer getBuffer() const { return buffer; }
         void *getMappedMemory() const { return mapped; }
         uint32_t getInstanceCount() const { return instanceCount; }
