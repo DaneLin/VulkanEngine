@@ -50,6 +50,9 @@ namespace arc
                    swapChain.swapChainDepthFormat == swapChainDepthFormat;
         }
 
+        // MSAA
+        void createColorResources();
+
     private:
         void init();
         void createSwapChain();
@@ -72,6 +75,16 @@ namespace arc
 
         std::vector<VkFramebuffer> swapChainFramebuffers;
         VkRenderPass renderPass;
+
+        // MSAA
+        // Each pixel is sampled in an offscreen buffer which is then rendered to the screen
+        // This new buffer have to be able to store more than one sample per pixel
+        // Once a multisampled buffer is created, it has to be resolved to the default framebuffer
+        // which stores only a single sample per pixel
+        VkSampleCountFlagBits msaaSamples;
+        std::vector<VkImage> colorImages;
+        std::vector<VkDeviceMemory> colorImageMemorys;
+        std::vector<VkImageView> colorImageViews;
 
         std::vector<VkImage> depthImages;
         std::vector<VkDeviceMemory> depthImageMemorys;

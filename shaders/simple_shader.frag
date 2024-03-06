@@ -60,6 +60,7 @@ void main()
         blinnTerm = pow(blinnTerm, 512.0);
         specularLight += intensity * blinnTerm;
     }
-    //outColor = vec4(diffuseLight * fragColor + specularLight * fragColor, 1.0);
-    outColor = texture(texSampler, fragTexCoord);
+    vec3 textureColor = texture(texSampler, fragTexCoord).xyz;
+    outColor = vec4(diffuseLight * textureColor + specularLight * textureColor, 1.0);
+    //outColor = texture(texSampler, fragTexCoord);
 }

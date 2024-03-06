@@ -15,12 +15,16 @@ namespace arc
     ArcSwapChain::ArcSwapChain(ArcDevice &deviceRef, VkExtent2D extent)
         : device{deviceRef}, windowExtent{extent}
     {
+        msaaSamples = device.getMaxUsableSampleCount();
+        // msaaSamples = VK_SAMPLE_COUNT_2_BIT;
         init();
     }
 
     ArcSwapChain::ArcSwapChain(ArcDevice &deviceRef, VkExtent2D extent, std::shared_ptr<ArcSwapChain> previous)
         : device{deviceRef}, windowExtent{extent}, oldSwapChain{previous}
     {
+        msaaSamples = device.getMaxUsableSampleCount();
+        // msaaSamples = VK_SAMPLE_COUNT_2_BIT;
         init();
 
         // clean up old swap since it's no longer needed
@@ -39,6 +43,13 @@ namespace arc
         {
             vkDestroySwapchainKHR(device.device(), swapChain, nullptr);
             swapChain = nullptr;
+        }
+
+        for (int i = 0; i < colorImages.size(); i++)
+        {
+            vkDestroyImageView(device.device(), colorImageViews[i], nullptr);
+            vkDestroyImage(device.device(), colorImages[i], nullptr);
+            vkFreeMemory(device.device(), colorImageMemorys[i], nullptr);
         }
 
         for (int i = 0; i < depthImages.size(); i++)
@@ -140,6 +151,7 @@ namespace arc
         createSwapChain();
         createImageViews();
         createRenderPass();
+        createColorResources();
         createDepthResources();
         createFramebuffers();
         createSyncObjects();
@@ -240,7 +252,7 @@ namespace arc
     {
         VkAttachmentDescription depthAttachment{};
         depthAttachment.format = findDepthFormat();
-        depthAttachment.samples = VK_SAMPLE_COUNT_1_BIT;
+        depthAttachment.samples = msaaSamples;
         depthAttachment.loadOp = VK_ATTACHMENT_LOAD_OP_CLEAR;
         depthAttachment.storeOp = VK_ATTACHMENT_STORE_OP_DONT_CARE;
         depthAttachment.stencilLoadOp = VK_ATTACHMENT_LOAD_OP_DONT_CARE;
@@ -254,23 +266,38 @@ namespace arc
 
         VkAttachmentDescription colorAttachment = {};
         colorAttachment.format = getSwapChainImageFormat();
-        colorAttachment.samples = VK_SAMPLE_COUNT_1_BIT;
+        colorAttachment.samples = msaaSamples;
         colorAttachment.loadOp = VK_ATTACHMENT_LOAD_OP_CLEAR;
         colorAttachment.storeOp = VK_ATTACHMENT_STORE_OP_STORE;
         colorAttachment.stencilStoreOp = VK_ATTACHMENT_STORE_OP_DONT_CARE;
         colorAttachment.stencilLoadOp = VK_ATTACHMENT_LOAD_OP_DONT_CARE;
         colorAttachment.initialLayout = VK_IMAGE_LAYOUT_UNDEFINED;
-        colorAttachment.finalLayout = VK_IMAGE_LAYOUT_PRESENT_SRC_KHR;
+        colorAttachment.finalLayout = VK_IMAGE_LAYOUT_COLOR_ATTACHMENT_OPTIMAL;
+
+        VkAttachmentDescription colorAttachmentResolve{};
+        colorAttachmentResolve.format = getSwapChainImageFormat();
+        colorAttachmentResolve.samples = VK_SAMPLE_COUNT_1_BIT;
+        colorAttachmentResolve.loadOp = VK_ATTACHMENT_LOAD_OP_DONT_CARE;
+        colorAttachmentResolve.storeOp = VK_ATTACHMENT_STORE_OP_DONT_CARE;
+        colorAttachmentResolve.stencilLoadOp = VK_ATTACHMENT_LOAD_OP_DONT_CARE;
+        colorAttachmentResolve.stencilStoreOp = VK_ATTACHMENT_STORE_OP_DONT_CARE;
+        colorAttachmentResolve.initialLayout = VK_IMAGE_LAYOUT_UNDEFINED;
+        colorAttachmentResolve.finalLayout = VK_IMAGE_LAYOUT_PRESENT_SRC_KHR;
 
         VkAttachmentReference colorAttachmentRef = {};
-        colorAttachmentRef.attachment = 0;
+        colorAttachmentRef.attachment = 2;
         colorAttachmentRef.layout = VK_IMAGE_LAYOUT_COLOR_ATTACHMENT_OPTIMAL;
+
+        VkAttachmentReference colorAttachmentResolveRef = {};
+        colorAttachmentResolveRef.attachment = 0;
+        colorAttachmentResolveRef.layout = VK_IMAGE_LAYOUT_COLOR_ATTACHMENT_OPTIMAL;
 
         VkSubpassDescription subpass = {};
         subpass.pipelineBindPoint = VK_PIPELINE_BIND_POINT_GRAPHICS;
         subpass.colorAttachmentCount = 1;
         subpass.pColorAttachments = &colorAttachmentRef;
         subpass.pDepthStencilAttachment = &depthAttachmentRef;
+        subpass.pResolveAttachments = &colorAttachmentResolveRef;
 
         VkSubpassDependency dependency = {};
         dependency.srcSubpass = VK_SUBPASS_EXTERNAL;
@@ -283,9 +310,10 @@ namespace arc
         dependency.dstAccessMask =
             VK_ACCESS_COLOR_ATTACHMENT_WRITE_BIT | VK_ACCESS_DEPTH_STENCIL_ATTACHMENT_WRITE_BIT;
 
-        std::array<VkAttachmentDescription, 2> attachments = {colorAttachment, depthAttachment};
+        std::array<VkAttachmentDescription, 3> attachments = {colorAttachmentResolve, depthAttachment, colorAttachment};
         VkRenderPassCreateInfo renderPassInfo = {};
         renderPassInfo.sType = VK_STRUCTURE_TYPE_RENDER_PASS_CREATE_INFO;
+
         renderPassInfo.attachmentCount = static_cast<uint32_t>(attachments.size());
         renderPassInfo.pAttachments = attachments.data();
         renderPassInfo.subpassCount = 1;
@@ -304,7 +332,7 @@ namespace arc
         swapChainFramebuffers.resize(imageCount());
         for (size_t i = 0; i < imageCount(); i++)
         {
-            std::array<VkImageView, 2> attachments = {swapChainImageViews[i], depthImageViews[i]};
+            std::array<VkImageView, 3> attachments = {swapChainImageViews[i], depthImageViews[i], colorImageViews[i]};
 
             VkExtent2D swapChainExtent = getSwapChainExtent();
             VkFramebufferCreateInfo framebufferInfo = {};
@@ -351,7 +379,7 @@ namespace arc
             imageInfo.tiling = VK_IMAGE_TILING_OPTIMAL;
             imageInfo.initialLayout = VK_IMAGE_LAYOUT_UNDEFINED;
             imageInfo.usage = VK_IMAGE_USAGE_DEPTH_STENCIL_ATTACHMENT_BIT;
-            imageInfo.samples = VK_SAMPLE_COUNT_1_BIT;
+            imageInfo.samples = msaaSamples;
             imageInfo.sharingMode = VK_SHARING_MODE_EXCLUSIVE;
             imageInfo.flags = 0;
 
@@ -373,6 +401,55 @@ namespace arc
             viewInfo.subresourceRange.layerCount = 1;
 
             if (vkCreateImageView(device.device(), &viewInfo, nullptr, &depthImageViews[i]) != VK_SUCCESS)
+            {
+                throw std::runtime_error("failed to create texture image view!");
+            }
+        }
+    }
+
+    void ArcSwapChain::createColorResources()
+    {
+        colorImages.resize(imageCount());
+        colorImageMemorys.resize(imageCount());
+        colorImageViews.resize(imageCount());
+
+        VkExtent2D swapChainExtent = getSwapChainExtent();
+
+        for (int i = 0; i < colorImages.size(); ++i)
+        {
+            VkImageCreateInfo imageCreateInfo{};
+            imageCreateInfo.sType = VK_STRUCTURE_TYPE_IMAGE_CREATE_INFO;
+            imageCreateInfo.imageType = VK_IMAGE_TYPE_2D;
+            imageCreateInfo.extent.width = swapChainExtent.width;
+            imageCreateInfo.extent.height = swapChainExtent.height;
+            imageCreateInfo.extent.depth = 1;
+            imageCreateInfo.mipLevels = 1;
+            imageCreateInfo.arrayLayers = 1;
+            imageCreateInfo.format = swapChainImageFormat;
+            imageCreateInfo.tiling = VK_IMAGE_TILING_OPTIMAL;
+            imageCreateInfo.usage = VK_IMAGE_USAGE_TRANSIENT_ATTACHMENT_BIT | VK_IMAGE_USAGE_COLOR_ATTACHMENT_BIT;
+            imageCreateInfo.sharingMode = VK_SHARING_MODE_EXCLUSIVE;
+            imageCreateInfo.initialLayout = VK_IMAGE_LAYOUT_UNDEFINED;
+            imageCreateInfo.flags = 0;
+            imageCreateInfo.samples = msaaSamples;
+
+            device.createImageWithInfo(imageCreateInfo,
+                                       VK_MEMORY_PROPERTY_DEVICE_LOCAL_BIT,
+                                       colorImages[i],
+                                       colorImageMemorys[i]);
+
+            VkImageViewCreateInfo imageViewCreateInfo{};
+            imageViewCreateInfo.sType = VK_STRUCTURE_TYPE_IMAGE_VIEW_CREATE_INFO;
+            imageViewCreateInfo.viewType = VK_IMAGE_VIEW_TYPE_2D;
+            imageViewCreateInfo.image = colorImages[i];
+            imageViewCreateInfo.format = swapChainImageFormat;
+            imageViewCreateInfo.subresourceRange.aspectMask = VK_IMAGE_ASPECT_COLOR_BIT;
+            imageViewCreateInfo.subresourceRange.baseMipLevel = 0;
+            imageViewCreateInfo.subresourceRange.levelCount = 1;
+            imageViewCreateInfo.subresourceRange.baseArrayLayer = 0;
+            imageViewCreateInfo.subresourceRange.layerCount = 1;
+
+            if (vkCreateImageView(device.device(), &imageViewCreateInfo, nullptr, &colorImageViews[i]) != VK_SUCCESS)
             {
                 throw std::runtime_error("failed to create texture image view!");
             }

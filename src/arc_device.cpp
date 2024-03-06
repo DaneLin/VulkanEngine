@@ -459,18 +459,40 @@ namespace arc
 
         VkSampleCountFlags counts = physicalDeviceProperties.limits.framebufferColorSampleCounts & physicalDeviceProperties.limits.framebufferDepthSampleCounts;
         if (counts & VK_SAMPLE_COUNT_64_BIT)
+        {
+            std::cout << "Maximum sample cout is 64.\n";
             return VK_SAMPLE_COUNT_64_BIT;
+        }
         if (counts & VK_SAMPLE_COUNT_32_BIT)
+        {
+            std::cout << "Maximum sample cout is 32.\n";
             return VK_SAMPLE_COUNT_32_BIT;
-        if (counts & VK_SAMPLE_COUNT_16_BIT)
-            return VK_SAMPLE_COUNT_16_BIT;
-        if (counts & VK_SAMPLE_COUNT_8_BIT)
-            return VK_SAMPLE_COUNT_8_BIT;
-        if (counts & VK_SAMPLE_COUNT_4_BIT)
-            return VK_SAMPLE_COUNT_4_BIT;
-        if (counts & VK_SAMPLE_COUNT_2_BIT)
-            return VK_SAMPLE_COUNT_2_BIT;
+        }
 
+        if (counts & VK_SAMPLE_COUNT_16_BIT)
+        {
+            std::cout << "Maximum sample cout is 16.\n";
+            return VK_SAMPLE_COUNT_16_BIT;
+        }
+
+        if (counts & VK_SAMPLE_COUNT_8_BIT)
+        {
+            std::cout << "Maximum sample cout is 8.\n";
+            return VK_SAMPLE_COUNT_8_BIT;
+        }
+
+        if (counts & VK_SAMPLE_COUNT_4_BIT)
+        {
+            std::cout << "Maximum sample cout is 4.\n";
+            return VK_SAMPLE_COUNT_4_BIT;
+        }
+
+        if (counts & VK_SAMPLE_COUNT_2_BIT)
+        {
+            std::cout << "Maximum sample cout is 2.\n";
+            return VK_SAMPLE_COUNT_2_BIT;
+        }
+        std::cout << "Maximum sample cout is 1.\n";
         return VK_SAMPLE_COUNT_1_BIT;
     }
 

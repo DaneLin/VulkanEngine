@@ -233,7 +233,7 @@ namespace arc
                     if (idx.texcoord_index >= 0)
                     {
                         vertex.uv.x = attrib.texcoords[2 * size_t(idx.texcoord_index) + 0];
-                        vertex.uv.y = attrib.texcoords[2 * size_t(idx.texcoord_index) + 1];
+                        vertex.uv.y = 1.0f - attrib.texcoords[2 * size_t(idx.texcoord_index) + 1];
                     }
 
                     if (uniqueVertices.count(vertex) == 0)

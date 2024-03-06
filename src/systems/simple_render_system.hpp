@@ -1,9 +1,7 @@
 #pragma once
 
-#include "arc_camera.hpp"
 #include "arc_pipeline.hpp"
 #include "arc_device.hpp"
-#include "arc_game_object.hpp"
 #include "arc_frame_info.hpp"
 
 // std

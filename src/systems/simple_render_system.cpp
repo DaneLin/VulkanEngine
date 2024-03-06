@@ -55,11 +55,13 @@ namespace arc
     void SimpleRenderSystem::createPipeline(VkRenderPass renderPass)
     {
 
-        assert(pipelineLayout != nullptr && "Cannot craete pipeline before pipeline layout!");
+        assert(pipelineLayout != nullptr && "Cannot create pipeline before pipeline layout!");
         PipelineConfigInfo pipelineConfig{};
         ArcPipeline::defaultPipelineConfigInfo(pipelineConfig);
         pipelineConfig.renderPass = renderPass;
         pipelineConfig.pipelineLayout = pipelineLayout;
+        pipelineConfig.multisampleInfo.rasterizationSamples = arcDevice.getMaxUsableSampleCount();
+        // pipelineConfig.multisampleInfo.rasterizationSamples = VK_SAMPLE_COUNT_2_BIT;
         arcPipeline = std::make_unique<ArcPipeline>(
             arcDevice,
             "shaders/simple_shader.vert.spv",

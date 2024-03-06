@@ -43,10 +43,11 @@ namespace arc
         VkImage textureImage{};
         VkDeviceMemory textureImageMemory{};
 
-        VkImageView textureImageView;
+        VkImageView textureImageView{};
         // The sampler is a distinct object that provides an interface to extract colors from a texture
         // It can be applied to any image we want
-        VkSampler textureSampler;
+        VkSampler textureSampler{};
+        uint32_t mipLevels;
     };
 }
 

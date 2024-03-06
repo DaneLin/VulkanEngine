@@ -39,7 +39,8 @@ namespace arc
     void FirstApp::run()
     {
         std::vector<std::unique_ptr<ArcBuffer>> globalUboBuffers(ArcSwapChain::MAX_FRAMES_IN_FLIGHT);
-        ArcTexture arcTeture{arcDevice, "images/texture.jpg"};
+        // ArcTexture arcTeture{arcDevice, "images/texture.jpg"};
+        ArcTexture arcTeture{arcDevice, "images/viking_room.png"};
         for (int i = 0; i < globalUboBuffers.size(); ++i)
         {
             globalUboBuffers[i] = std::make_unique<ArcBuffer>(
@@ -192,16 +193,22 @@ namespace arc
         arcModel = ArcModel::createModelFromFile(arcDevice, "models/flat_vase.obj");
         auto flatVase = ArcGameObject::createGameObject();
         flatVase.model = arcModel;
-        flatVase.transform.translation = {.5f, .5f, 0.f};
+        flatVase.transform.translation = {.5f, .5f, 1.f};
         flatVase.transform.scale = {3.0f, 1.6f, 3.f};
         gameObjects.emplace(flatVase.getID(), std::move(flatVase));
 
         arcModel = ArcModel::createModelFromFile(arcDevice, "models/quad.obj");
         auto floor = ArcGameObject::createGameObject();
         floor.model = arcModel;
-        floor.transform.translation = {0.f, .5f, 0.f};
+        floor.transform.translation = {0.f, .5f, 1.f};
         floor.transform.scale = {3.0f, 1.f, 3.f};
         gameObjects.emplace(floor.getID(), std::move(floor));
+
+        arcModel = ArcModel::createModelFromFile(arcDevice, "models/viking_room.obj");
+        auto vikingRoom = ArcGameObject::createGameObject();
+        vikingRoom.model = arcModel;
+        vikingRoom.transform.translation = {1.f, 0.f, 0.f};
+        gameObjects.emplace(vikingRoom.getID(), std::move(vikingRoom));
 
         std::vector<glm::vec3> lightColors{
             {1.f, .1f, .1f},

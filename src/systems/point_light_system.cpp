@@ -64,6 +64,8 @@ namespace arc
         pipelineConfig.attributeDescriptions.clear();
         pipelineConfig.renderPass = renderPass;
         pipelineConfig.pipelineLayout = pipelineLayout;
+        pipelineConfig.multisampleInfo.rasterizationSamples = arcDevice.getMaxUsableSampleCount();
+        // pipelineConfig.multisampleInfo.rasterizationSamples = VK_SAMPLE_COUNT_2_BIT;
         arcPipeline = std::make_unique<ArcPipeline>(
             arcDevice,
             "shaders/point_light.vert.spv",
