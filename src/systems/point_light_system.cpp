@@ -65,12 +65,16 @@ namespace arc
         pipelineConfig.renderPass = renderPass;
         pipelineConfig.pipelineLayout = pipelineLayout;
         pipelineConfig.multisampleInfo.rasterizationSamples = arcDevice.getMaxUsableSampleCount();
+
+        PipelineShaderConfigInfo shaderConfig{};
+        shaderConfig.stageInfo.pSpecializationInfo = nullptr;
         // pipelineConfig.multisampleInfo.rasterizationSamples = VK_SAMPLE_COUNT_2_BIT;
         arcPipeline = std::make_unique<ArcPipeline>(
             arcDevice,
             "shaders/point_light.vert.spv",
             "shaders/point_light.frag.spv",
-            pipelineConfig);
+            pipelineConfig,
+            shaderConfig);
     }
 
     void PointLightSystem::update(FrameInfo &frameInfo, GlobalUbo &ubo)

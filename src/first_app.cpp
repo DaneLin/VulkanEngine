@@ -2,6 +2,7 @@
 #include "arc_camera.hpp"
 #include "systems/simple_render_system.hpp"
 #include "systems/point_light_system.hpp"
+#include "systems/specializationConstants.hpp"
 #include "keyboard_movement_controller.hpp"
 #include "arc_frame_info.hpp"
 #include "arc_texture.hpp"
@@ -70,8 +71,9 @@ namespace arc
                 .build(globalDescriptorSets[i]);
         }
 
-        SimpleRenderSystem simpleRenderSystem{arcDevice, arcRenderer.getSwapChainRenderPass(), globalSetLayout->getDescriptorSetLayout()};
+        // SimpleRenderSystem simpleRenderSystem{arcDevice, arcRenderer.getSwapChainRenderPass(), globalSetLayout->getDescriptorSetLayout()};
         PointLightSystem pointLightSystem{arcDevice, arcRenderer.getSwapChainRenderPass(), globalSetLayout->getDescriptorSetLayout()};
+        SpecializationConstantSystem specializationConstantSystem{arcDevice, arcRenderer.getSwapChainRenderPass(), globalSetLayout->getDescriptorSetLayout()};
         ArcCamera camera{};
         // camera.setViewDirection(glm::vec3{0.f}, glm::vec3(0.5f, 0.f, 1.f));
 
@@ -119,7 +121,8 @@ namespace arc
 
                 // render
                 arcRenderer.beginSwapChainRenderPass(commandBuffer);
-                simpleRenderSystem.renderGameObjects(frameInfo);
+                // simpleRenderSystem.renderGameObjects(frameInfo);
+                specializationConstantSystem.renderGameObjects(frameInfo);
                 pointLightSystem.render(frameInfo);
                 arcRenderer.endSwapChainRenderPass(commandBuffer);
                 arcRenderer.endFrame();

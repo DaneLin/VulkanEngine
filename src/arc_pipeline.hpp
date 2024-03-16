@@ -31,10 +31,23 @@ namespace arc
         uint32_t subpass = 0;
     };
 
+    struct PipelineShaderConfigInfo
+    {
+        PipelineShaderConfigInfo() = default;
+        PipelineShaderConfigInfo(const PipelineShaderConfigInfo &) = delete;
+        PipelineShaderConfigInfo &operator=(const PipelineShaderConfigInfo &) = delete;
+
+        VkPipelineShaderStageCreateInfo stageInfo{};
+    };
+
     class ArcPipeline
     {
     public:
-        ArcPipeline(ArcDevice &device, const std::string &vertFilePath, const std::string &fragFilePath, const PipelineConfigInfo &configInfo);
+        ArcPipeline(ArcDevice &device,
+                    const std::string &vertFilePath,
+                    const std::string &fragFilePath,
+                    const PipelineConfigInfo &configInfo,
+                    const PipelineShaderConfigInfo &shaderConfigInfo);
         ~ArcPipeline();
 
         ArcPipeline(const ArcPipeline &) = delete;
@@ -49,14 +62,17 @@ namespace arc
     private:
         static std::vector<char> readFile(const std::string &filepath);
 
-        void createGraphicsPipeline(const std::string &vertFilePath, const std::string &fragFilePath, const PipelineConfigInfo &configInfo);
+        void createGraphicsPipeline(const std::string &vertFilePath,
+                                    const std::string &fragFilePath,
+                                    const PipelineConfigInfo &configInfo,
+                                    const PipelineShaderConfigInfo &shaderConfigInfo);
 
         void createShaderModule(const std::vector<char> &code, VkShaderModule *shaderModule);
+        VkPipelineShaderStageCreateInfo loadShader(const std::string &shaderPath, VkShaderStageFlagBits stage);
 
         ArcDevice &arcDevice;
         VkPipeline graphicsPipeline;
-        VkShaderModule vertShaderModule;
-        VkShaderModule fragShaderModule;
+        std::vector<VkShaderModule> shaderModules;
     };
 }
 #endif // __ARC_PIPELINE_H__

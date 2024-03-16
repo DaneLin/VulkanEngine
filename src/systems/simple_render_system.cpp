@@ -61,12 +61,16 @@ namespace arc
         pipelineConfig.renderPass = renderPass;
         pipelineConfig.pipelineLayout = pipelineLayout;
         pipelineConfig.multisampleInfo.rasterizationSamples = arcDevice.getMaxUsableSampleCount();
+
+        PipelineShaderConfigInfo shaderConfig{};
+        shaderConfig.stageInfo.pSpecializationInfo = nullptr;
         // pipelineConfig.multisampleInfo.rasterizationSamples = VK_SAMPLE_COUNT_2_BIT;
         arcPipeline = std::make_unique<ArcPipeline>(
             arcDevice,
             "shaders/simple_shader.vert.spv",
             "shaders/simple_shader.frag.spv",
-            pipelineConfig);
+            pipelineConfig,
+            shaderConfig);
     }
 
     void SimpleRenderSystem::renderGameObjects(FrameInfo &frameInfo)
