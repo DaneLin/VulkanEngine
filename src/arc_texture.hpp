@@ -2,7 +2,7 @@
 #define __ARC_TEXTURE_H__
 
 #include "arc_device.hpp"
-
+#include "arc_image.hpp"
 // std
 #include <string>
 
