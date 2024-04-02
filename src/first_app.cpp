@@ -214,7 +214,7 @@ namespace arc
         arcModel = ArcModel::createModelFromFile(arcDevice, "models/venus.obj");
         auto venus = ArcGameObject::createGameObject();
         venus.model = arcModel;
-        venus.transform.translation = {0.f, .5f, 1.f};
+        venus.transform.translation = {1.f, 0.f, 1.f};
         // venus.transform.rotation = {0.f, -1.f, 0.f};
         gameObjects.emplace(venus.getID(), std::move(venus));
 
