@@ -77,7 +77,7 @@ namespace arc
         // depth stencil
         configInfo.depthStencilInfo.sType = VK_STRUCTURE_TYPE_PIPELINE_DEPTH_STENCIL_STATE_CREATE_INFO;
         configInfo.depthStencilInfo.depthTestEnable = VK_TRUE;
-        configInfo.depthStencilInfo.depthCompareOp = VK_COMPARE_OP_LESS;
+        configInfo.depthStencilInfo.depthCompareOp = VK_COMPARE_OP_LESS_OR_EQUAL;
         configInfo.depthStencilInfo.depthWriteEnable = VK_TRUE;
         configInfo.depthStencilInfo.depthBoundsTestEnable = VK_FALSE;
         configInfo.depthStencilInfo.stencilTestEnable = VK_FALSE;

@@ -4,6 +4,7 @@
 #include "systems/point_light_system.hpp"
 #include "systems/specializationConstants.hpp"
 // #include "systems/imgui_system.hpp"
+#include "systems/stencil_system.hpp"
 #include "keyboard_movement_controller.hpp"
 #include "arc_frame_info.hpp"
 #include "arc_texture.hpp"
@@ -74,7 +75,8 @@ namespace arc
 
         // SimpleRenderSystem simpleRenderSystem{arcDevice, arcRenderer.getSwapChainRenderPass(), globalSetLayout->getDescriptorSetLayout()};
         PointLightSystem pointLightSystem{arcDevice, arcRenderer.getSwapChainRenderPass(), globalSetLayout->getDescriptorSetLayout()};
-        SpecializationConstantSystem specializationConstantSystem{arcDevice, arcRenderer.getSwapChainRenderPass(), globalSetLayout->getDescriptorSetLayout()};
+        // SpecializationConstantSystem specializationConstantSystem{arcDevice, arcRenderer.getSwapChainRenderPass(), globalSetLayout->getDescriptorSetLayout()};
+        StencilSystem stencilSystem{arcDevice, arcRenderer.getSwapChainRenderPass(), globalSetLayout->getDescriptorSetLayout()};
         ArcCamera camera{};
         // camera.setViewDirection(glm::vec3{0.f}, glm::vec3(0.5f, 0.f, 1.f));
 
@@ -123,7 +125,8 @@ namespace arc
                 // render
                 arcRenderer.beginSwapChainRenderPass(commandBuffer);
                 // simpleRenderSystem.renderGameObjects(frameInfo);
-                specializationConstantSystem.renderGameObjects(frameInfo);
+                // specializationConstantSystem.renderGameObjects(frameInfo);
+                stencilSystem.render(frameInfo);
                 pointLightSystem.render(frameInfo);
                 arcRenderer.endSwapChainRenderPass(commandBuffer);
                 arcRenderer.endFrame();
@@ -186,33 +189,40 @@ namespace arc
 
     void FirstApp::loadGameObjects()
     {
-        std::shared_ptr<ArcModel> arcModel = ArcModel::createModelFromFile(arcDevice, "models/smooth_vase.obj");
+        std::shared_ptr<ArcModel> arcModel;
+        // arcModel= ArcModel::createModelFromFile(arcDevice, "models/smooth_vase.obj");
+        //  auto gameObj = ArcGameObject::createGameObject();
+        //  gameObj.model = arcModel;
+        //  gameObj.transform.translation = {0.f, 0.5f, 0.f};
+        //  gameObj.transform.scale = {1.0f, 1.5f, 1.0f};
+        //  gameObjects.emplace(gameObj.getID(), std::move(gameObj));
 
-        auto gameObj = ArcGameObject::createGameObject();
-        gameObj.model = arcModel;
-        gameObj.transform.translation = {0.f, 0.5f, 0.f};
-        gameObj.transform.scale = {1.0f, 1.5f, 1.0f};
-        gameObjects.emplace(gameObj.getID(), std::move(gameObj));
+        // arcModel = ArcModel::createModelFromFile(arcDevice, "models/flat_vase.obj");
+        // auto flatVase = ArcGameObject::createGameObject();
+        // flatVase.model = arcModel;
+        // flatVase.transform.translation = {.5f, .5f, 1.f};
+        // flatVase.transform.scale = {3.0f, 1.6f, 3.f};
+        // gameObjects.emplace(flatVase.getID(), std::move(flatVase));
 
-        arcModel = ArcModel::createModelFromFile(arcDevice, "models/flat_vase.obj");
-        auto flatVase = ArcGameObject::createGameObject();
-        flatVase.model = arcModel;
-        flatVase.transform.translation = {.5f, .5f, 1.f};
-        flatVase.transform.scale = {3.0f, 1.6f, 3.f};
-        gameObjects.emplace(flatVase.getID(), std::move(flatVase));
+        // arcModel = ArcModel::createModelFromFile(arcDevice, "models/quad.obj");
+        // auto floor = ArcGameObject::createGameObject();
+        // floor.model = arcModel;
+        // floor.transform.translation = {0.f, .5f, 1.f};
+        // floor.transform.scale = {3.0f, 1.f, 3.f};
+        // gameObjects.emplace(floor.getID(), std::move(floor));
 
-        arcModel = ArcModel::createModelFromFile(arcDevice, "models/quad.obj");
-        auto floor = ArcGameObject::createGameObject();
-        floor.model = arcModel;
-        floor.transform.translation = {0.f, .5f, 1.f};
-        floor.transform.scale = {3.0f, 1.f, 3.f};
-        gameObjects.emplace(floor.getID(), std::move(floor));
+        arcModel = ArcModel::createModelFromFile(arcDevice, "models/venus.obj");
+        auto venus = ArcGameObject::createGameObject();
+        venus.model = arcModel;
+        venus.transform.translation = {0.f, .5f, 1.f};
+        // venus.transform.rotation = {0.f, -1.f, 0.f};
+        gameObjects.emplace(venus.getID(), std::move(venus));
 
-        arcModel = ArcModel::createModelFromFile(arcDevice, "models/viking_room.obj");
-        auto vikingRoom = ArcGameObject::createGameObject();
-        vikingRoom.model = arcModel;
-        vikingRoom.transform.translation = {1.f, 0.f, 0.f};
-        gameObjects.emplace(vikingRoom.getID(), std::move(vikingRoom));
+        // arcModel = ArcModel::createModelFromFile(arcDevice, "models/viking_room.obj");
+        // auto vikingRoom = ArcGameObject::createGameObject();
+        // vikingRoom.model = arcModel;
+        // vikingRoom.transform.translation = {1.f, 0.f, 0.f};
+        // gameObjects.emplace(vikingRoom.getID(), std::move(vikingRoom));
 
         std::vector<glm::vec3> lightColors{
             {1.f, .1f, .1f},

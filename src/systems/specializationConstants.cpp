@@ -32,9 +32,9 @@ namespace arc
         // viewport.width = 400;
         // vkCmdSetViewport(frameInfo.commandBuffer, 0, 1, &viewport);
 
-        // pipelines.toon->bind(frameInfo.commandBuffer);
+        pipelines.toon->bind(frameInfo.commandBuffer);
         //  pipelines.phong->bind(frameInfo.commandBuffer);
-        pipelines.textured->bind(frameInfo.commandBuffer);
+        // pipelines.textured->bind(frameInfo.commandBuffer);
 
         vkCmdBindDescriptorSets(
             frameInfo.commandBuffer,

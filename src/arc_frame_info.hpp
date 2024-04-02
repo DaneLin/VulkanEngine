@@ -25,6 +25,7 @@ namespace arc
         glm::mat4 inverseView{1.f};
         glm::vec4 ambientLightColor{1.f, 1.f, 1.f, .02f};
         PointLight pointLights[MAX_LIGHTS];
+        float outlineWidth = 0.025f;
         int numLights;
     };
 
