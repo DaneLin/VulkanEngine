@@ -11,10 +11,12 @@ namespace arc
         ArcImage(ArcDevice &device);
         ~ArcImage();
 
+        ArcImage(const ArcImage &) = delete;
+        ArcImage &operator=(const ArcImage &) = delete;
+
         void createImage(uint32_t width, uint32_t height, VkFormat format,
-                         uint32_t miplevels, uint32_t arrayLayers, VkImageTiling tiling, VkImageUsageFlags usage, VkMemoryPropertyFlags properties,
-                         VkImage &image, VkDeviceMemory &imageMemory);
-        void transitionImageLayout(VkImage image, VkFormat format, VkImageLayout oldLayout, VkImageLayout newLayout);
+                         uint32_t miplevels, uint32_t arrayLayers, VkImageTiling tiling, VkImageUsageFlags usage, VkMemoryPropertyFlags properties);
+        void transitionImageLayout(VkFormat format, VkImageLayout oldLayout, VkImageLayout newLayout);
 
         void createImageView(VkFormat format);
 

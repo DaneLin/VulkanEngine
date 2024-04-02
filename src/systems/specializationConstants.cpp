@@ -20,9 +20,21 @@ namespace arc
 
     void SpecializationConstantSystem::renderGameObjects(FrameInfo &frameInfo)
     {
-        pipelines.toon->bind(frameInfo.commandBuffer);
-        // pipelines.phong->bind(frameInfo.commandBuffer);
-        // pipelines.textured->bind(frameInfo.commandBuffer);
+        // VkRect2D scissor{};
+        // scissor.offset = {0, 0};
+        // scissor.extent = {800, 600};
+        // vkCmdSetScissor(frameInfo.commandBuffer, 0, 1, &scissor);
+
+        // VkViewport viewport{};
+        // viewport.x = 0;
+        // viewport.y = 0;
+        // viewport.height = 600;
+        // viewport.width = 400;
+        // vkCmdSetViewport(frameInfo.commandBuffer, 0, 1, &viewport);
+
+        // pipelines.toon->bind(frameInfo.commandBuffer);
+        //  pipelines.phong->bind(frameInfo.commandBuffer);
+        pipelines.textured->bind(frameInfo.commandBuffer);
 
         vkCmdBindDescriptorSets(
             frameInfo.commandBuffer,

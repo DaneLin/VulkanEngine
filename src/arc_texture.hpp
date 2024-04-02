@@ -5,6 +5,7 @@
 #include "arc_image.hpp"
 // std
 #include <string>
+#include <memory>
 
 namespace arc
 {
@@ -19,20 +20,13 @@ namespace arc
 
         VkDescriptorImageInfo descriptorInfo();
 
-        VkImageView getImageView() const { return textureImageView; }
         VkSampler getSampler() const { return textureSampler; }
 
     private:
         void createTextureImage(const std::string &imagepath);
-        void createImage(uint32_t width, uint32_t height, VkFormat format,
-                         VkImageTiling tiling, VkImageUsageFlags usage, VkMemoryPropertyFlags properties,
-                         VkImage &image, VkDeviceMemory &imageMemory);
-
-        void transitionImageLayout(VkImage image, VkFormat format, VkImageLayout oldLayout, VkImageLayout newLayout);
 
         // helper function
-        VkImageView createImageView(VkImage image, VkFormat format);
-        void createTextureImageView();
+        void createImageView(VkFormat format);
 
         // Sampler
         void createTextureSampler();
@@ -40,10 +34,7 @@ namespace arc
     private:
         ArcDevice &arcDevice;
 
-        VkImage textureImage{};
-        VkDeviceMemory textureImageMemory{};
-
-        VkImageView textureImageView{};
+        std::unique_ptr<ArcImage> arcImage;
         // The sampler is a distinct object that provides an interface to extract colors from a texture
         // It can be applied to any image we want
         VkSampler textureSampler{};

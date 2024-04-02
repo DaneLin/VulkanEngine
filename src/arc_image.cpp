@@ -19,8 +19,7 @@ namespace arc
     }
 
     void ArcImage::createImage(uint32_t width, uint32_t height, VkFormat format,
-                               uint32_t miplevels, uint32_t arrayLayers, VkImageTiling tiling, VkImageUsageFlags usage, VkMemoryPropertyFlags properties,
-                               VkImage &image, VkDeviceMemory &imageMemory)
+                               uint32_t miplevels, uint32_t arrayLayers, VkImageTiling tiling, VkImageUsageFlags usage, VkMemoryPropertyFlags properties)
     {
         // vkimagecreateinfo struct for creating an image
         VkImageCreateInfo imageInfo{};
@@ -58,7 +57,7 @@ namespace arc
         vkBindImageMemory(arcDevice.device(), image, imageMemory, 0);
     }
 
-    void ArcImage::transitionImageLayout(VkImage image, VkFormat format, VkImageLayout oldLayout, VkImageLayout newLayout)
+    void ArcImage::transitionImageLayout(VkFormat format, VkImageLayout oldLayout, VkImageLayout newLayout)
     {
         VkCommandBuffer commandBuffer = arcDevice.beginSingleTimeCommands();
 
